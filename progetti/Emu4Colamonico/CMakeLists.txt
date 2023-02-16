@@ -14,14 +14,22 @@ if (WIN32)
   set(UNICORN2_DIR "D:/Lavori/ColamonicoSDK")
   set(COLAMONC_DIR "D:/Lavori/ColamonicoSDK")
 else()
-  # TODO
+  set(SFML_DIR "${CMAKE_PREFIX_PATH}/lib/cmake/SFML")
+  set(KEYSTONE_DIR "${CMAKE_PREFIX_PATH}")
+  set(UNICORN2_DIR "${CMAKE_PREFIX_PATH}")
+  set(COLAMONC_DIR "${CMAKE_PREFIX_PATH}")
 endif()
 
 include(FindThreads)
 find_package(SFML 3.0 COMPONENTS Network Audio Graphics Window System REQUIRED)
 find_package(OpenGL REQUIRED)
-set(keystone "${KEYSTONE_DIR}/lib/keystone.lib")
-set(unicorn2 "${UNICORN2_DIR}/lib/unicorn-import.lib")
+if (WIN32)
+  set(keystone "${KEYSTONE_DIR}/lib/keystone.lib")
+  set(unicorn2 "${UNICORN2_DIR}/lib/unicorn-import.lib")
+else()
+  set(keystone "${KEYSTONE_DIR}/lib/libkeystone.so")
+  set(unicorn2 "${UNICORN2_DIR}/lib/libunicorn.so")
+endif()
 
 set (detected_libs 
   ${OPENGL_LIBRARIES}
