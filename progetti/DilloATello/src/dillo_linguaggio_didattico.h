@@ -37,19 +37,26 @@
   for (size_t passo_corrente = 0; passo_corrente < a; ++passo_corrente) {
 #define fai_questo_finche_e_vero_che(a) \
   while (a) {
+#define fai_questo \
+  do {
+#define e_rifallo_finche_e_vero_che(a) \
+  } while (a);
+#define se_e_vero_che(a)      if (a)
+#define allora_fai_questo     {
+#define altrimenti_fai_questo else {
 
 #define fai_dormire_il_processo_per_millisecondi(x) \
   stampa("IL PROCESSO DORME PER %u ms...\n",x); \
   std::this_thread::sleep_for(std::chrono::milliseconds(x));
 
-#define stampa_sulla_console_lo_stato_del_drone \
-do {\
-  const auto& st = drone.lastStatus();\
-  stampa_stato("STATO DEL DRONE: P,R,Y = %f,%f,%f ALTEZZA = %f\n"\
-    , st.u.status.pitch\
-    , st.u.status.roll\
-    , st.u.status.yaw\
-    , st.u.status.height_from_floor);\
+#define stampa_sulla_console_lo_stato_di(a)\
+  do {\
+    const auto& st = a.lastStatus();\
+    stampa_stato("STATO DI " #a ": P,R,Y = %f,%f,%f ALTEZZA = %f\n"\
+      , st.u.status.pitch\
+      , st.u.status.roll\
+      , st.u.status.yaw\
+      , st.u.status.height_from_floor);\
   } while(0);
 
 #define chiedi_informazione_a(a)\
