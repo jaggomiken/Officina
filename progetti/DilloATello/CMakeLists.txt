@@ -31,9 +31,35 @@ set(detected_incs
 
 set(target DilloATello)
 set(libs ${detected_libs})
+set(ext_cpp
+  src/ext/TextEditor.cpp
+  src/ext/TextEditor.h
+  src/ext/imconfig.h
+  src/ext/imgui.cpp
+  src/ext/imgui.h
+  src/ext/imgui_demo.cpp
+  src/ext/imgui_draw.cpp
+  src/ext/imgui_impl_opengl2.cpp
+  src/ext/imgui_impl_opengl2.h
+  src/ext/imgui_impl_opengl3.cpp
+  src/ext/imgui_impl_opengl3.h
+  src/ext/imgui_impl_opengl3_loader.h
+  src/ext/imgui_internal.h
+  src/ext/imgui_memory_editor.h
+  src/ext/imgui_tables.cpp
+  src/ext/imgui_widgets.cpp
+  src/ext/imstb_rectpack.h
+  src/ext/imstb_textedit.h
+  src/ext/imstb_truetype.h
+  src/ext/imgui-SFML.h
+  src/ext/imgui-SFML_export.h
+  src/ext/imconfig-SFML.h
+  src/ext/imgui-SFML.cpp
+)
 
-add_executable(${target}
+add_executable(${target} ${ext_cpp}
   src/dilloatello_main.cpp
+  src/dilloatello_programmi.cpp
   src/dilloatello_sistema.cpp
   src/dilloatello_sistema.h
   src/dilloatello_dillo_linguaggio_didattico.h
@@ -41,5 +67,6 @@ add_executable(${target}
   src/UDPSocket.h
 )
 
+target_include_directories(${target} PUBLIC src src/ext ${detected_incs})
 target_link_libraries(${target} LINK_PUBLIC ${libs})
 set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)

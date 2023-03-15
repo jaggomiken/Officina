@@ -3,35 +3,68 @@
  * Autore: Michele Iacobellis
  *   Data: 20221215
  * ========================================================================== */
-#include "dilloatello_dillo_linguaggio_didattico.h"
+#include "dilloatello_sistema.h"
 
-programma_inizio
-  crea_oggetto_da_astrazione(TelloDrone) dando_nome(topolino)
-  messaggia_oggetto(topolino, connect, ())
-  messaggia_oggetto(topolino, video_enable, (true))
-  messaggia_oggetto(topolino, takeoff, ())
-  crea_oggetto_da_astrazione(numero_intero_positivo) dando_nome(contatore_di_volte)
-  crea_oggetto_da_astrazione( numero_con_la_virgola) dando_nome(altezza)
-  crea_oggetto_da_astrazione( numero_con_la_virgola) dando_nome(distanza_y_percorsa)
-  contatore_di_volte = 0;
-  distanza_y_percorsa = 0;
-  altezza = chiedi_informazione_a(topolino) cosa(height_from_floor)
-  fai_questo
-    se_e_vero_che(altezza < 500) allora_fai_questo
-      messaggia_oggetto(topolino, go_U, (100))
-    fine_questo
-    messaggia_oggetto(topolino,      forward, (100))
-    contatore_di_volte = contatore_di_volte + 1;
-    distanza_y_percorsa += 100;
-    altezza = chiedi_informazione_a(topolino) cosa(height_from_floor)
-  e_rifallo_finche_e_vero_che(
-            (contatore_di_volte < 10) 
-    e_anche (altezza > 200)
-    e_anche (distanza_y_percorsa <= 1000))
-  messaggia_oggetto(topolino, land, ())
-programma_fine
+int main(int argc, char* argv[])
+{
+  // Costruisce la finestra di rendering dell'applicazione
+  sf::RenderWindow mainWindow(sf::VideoMode({ 1280, 720 })
+    , "DILLO A TELLO, del Prof. Michele Iacobellis - COLAMONICO");
+  mainWindow.setFramerateLimit(60);
+  ImGui::SFML::Init(mainWindow);
 
+  // Costruisce i componenti fondamentali della GUI
+  // TODO: ---
 
-/*
-./DilloATello | ffplay -fflags nobuffer -fflags discardcorrupt -flags low_delay -framedrop -avioflags direct -
-*/
+  // Configura lo stile dell'applicazione
+  auto& style = ImGui::GetStyle();
+  style.FrameRounding = 3;
+  style.ChildRounding = 3;
+  style.WindowRounding = 3;
+  style.ChildBorderSize = 1;
+  style.FrameBorderSize = 1;
+  style.PopupRounding = 3;
+  style.TabRounding = 3;
+  auto& io = ImGui::GetIO();
+  io.FontDefault = io.Fonts->Fonts[3];
+
+  // Variabile di controllo ciclo
+  uint32_t uExitLoop = 0;
+
+  // Entra nel ciclo principale per gli eventi e il rendering
+  sf::Clock deltaClock;
+  while (mainWindow.isOpen() && (0 == uExitLoop)) {
+    // Elabora gli eventi
+    sf::Event event;
+    while (mainWindow.pollEvent(event)) {
+      ImGui::SFML::ProcessEvent(mainWindow, event);
+      if (event.type == sf::Event::Closed) { uExitLoop = 1; }
+    }
+
+    if (0 == uExitLoop)
+    {
+      // Aggiorna la finestra
+      const sf::Time dt = deltaClock.restart();
+      ImGui::SFML::Update(mainWindow, dt);
+
+      // Disegna gli elementi dell'applicazione nella finestra corrente
+      ImGui::SFML::SetCurrentWindow(mainWindow);
+      ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
+      // TODO: ---
+
+      // Qui si può disegnare qualcosa (SOLO DIMOSTRATIVO)
+      sf::CircleShape shape(100.f);
+      shape.setFillColor(sf::Color::Green);
+      mainWindow.clear();
+      mainWindow.draw(shape);
+
+      // Avvia il rendering
+      ImGui::SFML::Render(mainWindow);
+      mainWindow.display();
+    }
+  }
+
+  mainWindow.close();
+  ImGui::SFML::Shutdown();
+  return 0;
+}

@@ -11,7 +11,7 @@
 #include "dilloatello_sistema.h"
 
 #define programma_inizio \
-  int main(int argc, char* argv[]) { \
+  int programma_tello() { \
     cancella_terminale();\
     stampa("IL PROGRAMMA È INIZIATO...\n");
 
