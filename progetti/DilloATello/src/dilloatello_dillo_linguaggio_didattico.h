@@ -7,8 +7,8 @@
 #ifndef dillo_linguaggio_didattico_h
 #define dillo_linguaggio_didattico_h
 
-#include "tello.h"
-#include "sistema.h"
+#include "dilloatello_tello.h"
+#include "dilloatello_sistema.h"
 
 #define programma_inizio \
   int main(int argc, char* argv[]) { \

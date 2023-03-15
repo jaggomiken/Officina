@@ -6,7 +6,7 @@
 
 #include <cstdarg>
 #include <cstdio>
-#include "sistema.h"
+#include "dilloatello_sistema.h"
 
 static const size_t gszStatusY  = 1;
 static       size_t gszCurLineY = 2;
