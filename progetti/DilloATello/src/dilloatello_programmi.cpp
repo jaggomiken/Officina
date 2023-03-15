@@ -30,8 +30,3 @@ programma_inizio
     e_anche (distanza_y_percorsa <= 1000))
   messaggia_oggetto(topolino, land, ())
 programma_fine
-
-
-/*
-./DilloATello | ffplay -fflags nobuffer -fflags discardcorrupt -flags low_delay -framedrop -avioflags direct -
-*/

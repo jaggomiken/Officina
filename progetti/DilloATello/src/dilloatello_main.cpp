@@ -3,7 +3,8 @@
  * Autore: Michele Iacobellis
  *   Data: 20221215
  * ========================================================================== */
-#include "dilloatello_sistema.h"
+#include "dilloatello_gui_commands.h"
+#include "dilloatello_gui_console.h"
 
 int main(int argc, char* argv[])
 {
@@ -14,7 +15,8 @@ int main(int argc, char* argv[])
   ImGui::SFML::Init(mainWindow);
 
   // Costruisce i componenti fondamentali della GUI
-  // TODO: ---
+  dillo::GuiCommands guiCmd;
+  dillo::GuiEditor guiEdt;
 
   // Configura lo stile dell'applicazione
   auto& style = ImGui::GetStyle();
@@ -50,7 +52,8 @@ int main(int argc, char* argv[])
       // Disegna gli elementi dell'applicazione nella finestra corrente
       ImGui::SFML::SetCurrentWindow(mainWindow);
       ImGui::DockSpaceOverViewport(nullptr, ImGuiDockNodeFlags_PassthruCentralNode);
-      // TODO: ---
+      guiCmd.draw();
+      guiEdt.draw();
 
       // Qui si può disegnare qualcosa (SOLO DIMOSTRATIVO)
       sf::CircleShape shape(100.f);

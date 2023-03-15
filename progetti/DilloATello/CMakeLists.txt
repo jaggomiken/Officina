@@ -61,9 +61,13 @@ add_executable(${target} ${ext_cpp}
   src/dilloatello_main.cpp
   src/dilloatello_programmi.cpp
   src/dilloatello_sistema.cpp
+  src/dilloatello_gui_commands.cpp
+  src/dilloatello_gui_console.cpp
   src/dilloatello_sistema.h
   src/dilloatello_dillo_linguaggio_didattico.h
   src/dilloatello_tello.h
+  src/dilloatello_gui_commands.h
+  src/dilloatello_gui_console.h
   src/UDPSocket.h
 )
 
