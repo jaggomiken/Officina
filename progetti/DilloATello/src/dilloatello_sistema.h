@@ -30,5 +30,6 @@ void cancella_terminale();
 void stampa(const char*, ...);
 void stampa_stato(const char*, ...);
 void stampa_errore(const char*, ...);
+std::string scoda_prossimo_messaggio();
 
 #endif // sistema_h

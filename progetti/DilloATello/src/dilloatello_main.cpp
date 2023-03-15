@@ -6,8 +6,17 @@
 #include "dilloatello_gui_commands.h"
 #include "dilloatello_gui_console.h"
 
+#ifdef WIN32
+# include <Windows.h>
+#endif
+
 int main(int argc, char* argv[])
 {
+  // Chiude la console
+#ifdef WIN32
+  ::FreeConsole();
+#endif
+
   // Costruisce la finestra di rendering dell'applicazione
   sf::RenderWindow mainWindow(sf::VideoMode({ 1280, 720 })
     , "DILLO A TELLO, del Prof. Michele Iacobellis - COLAMONICO");
@@ -56,10 +65,10 @@ int main(int argc, char* argv[])
       guiEdt.draw();
 
       // Qui si può disegnare qualcosa (SOLO DIMOSTRATIVO)
-      sf::CircleShape shape(100.f);
-      shape.setFillColor(sf::Color::Green);
-      mainWindow.clear();
-      mainWindow.draw(shape);
+      // sf::CircleShape shape(100.f);
+      // shape.setFillColor(sf::Color::Green);
+      // mainWindow.clear();
+      // mainWindow.draw(shape);
 
       // Avvia il rendering
       ImGui::SFML::Render(mainWindow);

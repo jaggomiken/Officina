@@ -61,6 +61,7 @@ add_executable(${target} ${ext_cpp}
   src/dilloatello_main.cpp
   src/dilloatello_programmi.cpp
   src/dilloatello_sistema.cpp
+  src/dilloatello_tello.cpp
   src/dilloatello_gui_commands.cpp
   src/dilloatello_gui_console.cpp
   src/dilloatello_sistema.h

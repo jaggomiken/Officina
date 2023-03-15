@@ -34,12 +34,16 @@
   stampa("STO PER FARE PER SEMPRE QUELLO CHE SCRIVI DOPO:\n"); \
   for(;;){
 #define fai_questo_per_volte(a) \
+  stampa("STO PER FARE " #a " VOLTE QUELLO CHE SCRIVI DOPO:\n"); \
   for (size_t passo_corrente = 0; passo_corrente < a; ++passo_corrente) {
 #define fai_questo_finche_e_vero_che(a) \
+  stampa("STO PER FARE FINCHE' E' VERO CHE " #a " QUELLO CHE SCRIVI DOPO:\n"); \
   while (a) {
 #define fai_questo \
+  stampa("STO PER FARE QUELLO CHE SCRIVI DOPO:\n"); \
   do {
 #define e_rifallo_finche_e_vero_che(a) \
+  stampa("E LO RIFACCIO SE E' VERO CHE " #a "...\n"); \
   } while (a);
 #define se_e_vero_che(a)      if (a)
 #define allora_fai_questo     {

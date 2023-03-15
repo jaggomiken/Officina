@@ -163,6 +163,12 @@ void dillo::GuiEditor::Impl::draw()
 		, m_editor.CanUndo() ? "*" : " "
 		, m_editor.GetLanguageDefinition().mName.c_str(), "PROGRAMMA.dillo");
 
+	auto msg = scoda_prossimo_messaggio();
+	if (!msg.empty()) {
+		m_editor.MoveBottom();
+		m_editor.InsertText(msg);
+	}
+
 	m_editor.Render("TextEditor");
 	ImGui::End();
 }

@@ -4,6 +4,8 @@
  *   Data: 20221215
  * ========================================================================== */
 
+#include <mutex>
+#include <queue>
 #include <cstdarg>
 #include <cstdio>
 #include "dilloatello_sistema.h"
@@ -11,6 +13,8 @@
 static const size_t gszStatusY  = 1;
 static       size_t gszCurLineY = 2;
 static char thread_local gBuf[4096];
+static std::queue<std::string> gQueueMsgs;
+static std::mutex gMtxQueueMsgs;
 
 void stampa(const char* fmt, ...)
 {
@@ -18,11 +22,9 @@ void stampa(const char* fmt, ...)
   va_start(arglist, fmt);
   vsnprintf(gBuf, sizeof(gBuf), fmt, arglist);
   va_end(arglist);
-
-  std::fprintf(stderr, "\033[%zu;%dH\033[K", gszCurLineY, 1);
-  std::fprintf(stderr, "%s", gBuf);
-  gszCurLineY += 1;
-  if (gszCurLineY > 10) { gszCurLineY = 1; }
+  
+  std::lock_guard<std::mutex> g{ gMtxQueueMsgs };
+  gQueueMsgs.push(gBuf);
 }
 
 void stampa_stato(const char* fmt, ...)
@@ -32,8 +34,8 @@ void stampa_stato(const char* fmt, ...)
   vsnprintf(gBuf, sizeof(gBuf), fmt, arglist);
   va_end(arglist);
 
-  std::fprintf(stderr, "\033[%zu;%dH\033[K", gszStatusY, 1);
-  std::fprintf(stderr, "%s", gBuf);
+  std::lock_guard<std::mutex> g{ gMtxQueueMsgs };
+  gQueueMsgs.push(gBuf);
 }
 
 void stampa_errore(const char* fmt, ...)
@@ -43,11 +45,22 @@ void stampa_errore(const char* fmt, ...)
   vsnprintf(gBuf, sizeof(gBuf), fmt, arglist);
   va_end(arglist);
 
-  std::fprintf(stderr, "\033[%zu;%dH\033[K", gszStatusY, 1);
-  std::fprintf(stderr, "[ERRORE] %s", gBuf);
+  std::lock_guard<std::mutex> g{ gMtxQueueMsgs };
+  gQueueMsgs.push("[ERRORE] " + std::string(gBuf));
 }
 
 void cancella_terminale()
 {
-  std::fprintf(stderr, "\033[2J");
+  
+}
+
+std::string scoda_prossimo_messaggio()
+{
+  std::lock_guard<std::mutex> g{ gMtxQueueMsgs };
+  if (!gQueueMsgs.empty()) {
+    auto ret = gQueueMsgs.front();
+    gQueueMsgs.pop();
+    return ret;
+  }
+  return{};
 }
