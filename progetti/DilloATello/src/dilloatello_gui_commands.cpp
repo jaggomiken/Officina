@@ -7,6 +7,7 @@
 
 #include "dilloatello_gui_commands.h"
 #include "dilloatello_tello.h"
+#include <atomic>
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
@@ -38,6 +39,7 @@ static std::vector<PropDesc> gvPropDescs{
   , {   "acceleration_x", "Accelerazione Lungo X", 1, 0.0f }
   , {   "acceleration_y", "Accelerazione Lungo Y", 1, 0.0f }
   , {   "acceleration_z", "Accelerazione Lungo Z", 1, 0.0f }
+  , {         "sequence",              "Sequenza", 1, 0.0f }
 };
 
  /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -50,7 +52,7 @@ public:
   void draw();
 
   std::thread m_threadTello;
-  bool m_bThreadStarted;
+  std::atomic_size_t m_szThreadStarted;
 };
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,7 +107,7 @@ void dillo::GuiCommands::draw()
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 dillo::GuiCommands::Impl::Impl()
-  : m_bThreadStarted { false }
+  : m_szThreadStarted { 0 }
 {
 }
 
@@ -114,7 +116,11 @@ dillo::GuiCommands::Impl::Impl()
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 dillo::GuiCommands::Impl::~Impl()
 {
-
+  if (0 != m_szThreadStarted) {
+    if (m_threadTello.joinable()) {
+      m_threadTello.join();
+    }
+  }
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -122,22 +128,63 @@ dillo::GuiCommands::Impl::~Impl()
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 void dillo::GuiCommands::Impl::draw()
 {
+  auto* tello = TelloDrone::GetTello();
+  if (nullptr != tello) {
+    const auto& st = tello->lastStatus();
+    gvPropDescs[ 0].fValue = st.u.status.pitch;
+    gvPropDescs[ 1].fValue = st.u.status.roll;
+    gvPropDescs[ 2].fValue = st.u.status.yaw;
+    gvPropDescs[ 3].fValue = st.u.status.speed_x;
+    gvPropDescs[ 4].fValue = st.u.status.speed_y;
+    gvPropDescs[ 5].fValue = st.u.status.speed_z;
+    gvPropDescs[ 6].fValue = st.u.status.temperature_lo;
+    gvPropDescs[ 7].fValue = st.u.status.temperature_hi;
+    gvPropDescs[ 8].fValue = st.u.status.time_of_flight;
+    gvPropDescs[ 9].fValue = st.u.status.height_from_floor;
+    gvPropDescs[10].fValue = st.u.status.battery_level;
+    gvPropDescs[11].fValue = st.u.status.barometer_cm;
+    gvPropDescs[12].fValue = st.u.status.motor_time;
+    gvPropDescs[13].fValue = st.u.status.acceleration_x;
+    gvPropDescs[14].fValue = st.u.status.acceleration_y;
+    gvPropDescs[15].fValue = st.u.status.acceleration_z;
+    gvPropDescs[16].fValue = st.sequence;
+  }
+
   if (ImGui::Begin("Comandi & Stato")) {
     bool bDis = false;
-    if (m_bThreadStarted) { ImGui::BeginDisabled(); bDis = true; }
+    if (0 != m_szThreadStarted) { ImGui::BeginDisabled(); bDis = true; }
     if (ImGui::Button("Avvia")) {
-      m_bThreadStarted = true;
-      m_threadTello = std::thread([]() {
+      if (m_threadTello.joinable()) { m_threadTello.join(); }
+      m_threadTello = std::thread([=]() {
+        m_szThreadStarted = 1;
         programma_tello();
+        m_szThreadStarted = 0;
       });
     }
     if (bDis) { ImGui::EndDisabled(); }
     ImGui::SameLine();
+    
+    bool bTelloDis = false;
+    if (nullptr == tello) { ImGui::BeginDisabled(); bTelloDis = true; }
+    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(240, 0, 0, 255));
     if (ImGui::Button("Emergenza")) {
-
+      if (nullptr != tello) {
+        tello->emergency();
+      }
     }
+    if (bTelloDis) { ImGui::EndDisabled(); }
+    ImGui::PopStyleColor();
     ImGui::SameLine();
-    ImGui::Text("STATO: %s", m_bThreadStarted ? "ACCESO" : "SPENTO");
+    ImGui::Text("STATO: ");
+    ImGui::SameLine();
+    if (0 != m_szThreadStarted) {
+      ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 240, 0, 255));
+      ImGui::Text("ACCESO");
+      ImGui::PopStyleColor();
+    }
+    else {
+      ImGui::Text("SPENTO");
+    }
     ImGui::Separator();
     for (auto& item : gvPropDescs) {
       ImGui::SetNextItemWidth(ImGui::GetFontSize() * 8);

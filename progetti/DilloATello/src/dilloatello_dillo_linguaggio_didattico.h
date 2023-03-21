@@ -25,9 +25,8 @@
 #define crea_oggetto_da_astrazione(tipo) tipo
 #define dando_nome(nome) nome;
 #define messaggia_oggetto(nome,msg,arg) \
-  stampa("MANDO IL MESSAGGIO " #msg " A " #nome ": "); \
-  nome.msg arg;\
-  stampa("  ACCODATO.\n");
+  stampa("METTO IN CODA IL MESSAGGIO " #msg " A " #nome "\n"); \
+  nome.msg arg;
 
 #define fine_questo }
 #define per_sempre_fai_questo \

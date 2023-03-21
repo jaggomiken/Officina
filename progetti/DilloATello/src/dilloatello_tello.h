@@ -87,7 +87,7 @@ public:
   bool video_enable(bool);
   bool mission_pad_enable(bool);
   
-  void wait_for_result(size_t ms = 100);
+  void wait_for_result(size_t ms = 100, size_t tmout = 10000);
   const Status& lastStatus() const {
     std::lock_guard<std::mutex> guard{ m_MtxStatus};
     return m_Status; 

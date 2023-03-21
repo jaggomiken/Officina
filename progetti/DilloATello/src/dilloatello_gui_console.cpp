@@ -77,6 +77,7 @@ dillo::GuiEditor::Impl::Impl()
   m_ld = TextEditor::LanguageDefinition::CPlusPlus();
   m_editor.SetLanguageDefinition(m_ld);
 	m_editor.SetPalette(TextEditor::GetLightPalette());
+	m_editor.SetReadOnly(false); // insert-text non funziona se è read-only
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

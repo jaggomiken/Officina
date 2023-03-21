@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
       // Qui si può disegnare qualcosa (SOLO DIMOSTRATIVO)
       // sf::CircleShape shape(100.f);
       // shape.setFillColor(sf::Color::Green);
-      // mainWindow.clear();
+      mainWindow.clear();
       // mainWindow.draw(shape);
 
       // Avvia il rendering

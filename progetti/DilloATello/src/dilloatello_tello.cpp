@@ -84,7 +84,24 @@ TelloDrone::TelloDrone()
 
 TelloDrone::~TelloDrone() {
   SetDronePointer(nullptr);
-  emergency();
+  m_uExitThreads = 1;
+
+  UDPsocket sockfake;
+  sockfake.open();
+  sockfake.send(std::string("null")
+    , UDPsocket::IPv4("127.0.0.1", kLOCAL_STATUS_PORT));
+  sockfake.send(std::string("null")
+    , UDPsocket::IPv4("127.0.0.1", kLOCAL_VIDEOS_PORT));
+
+  if (m_ThreadControlResult.joinable()) {
+    m_ThreadControlResult.join();
+  }
+  if (m_ThreadStatus.joinable()) {
+    m_ThreadStatus.join();
+  }
+  if (m_ThreadVideoStream.joinable()) {
+    m_ThreadVideoStream.join();
+  }
 }
 
 bool TelloDrone::connect() {
@@ -128,7 +145,7 @@ bool TelloDrone::connect() {
   m_SetupVideoStreamThread();
 
   // FASE 4, attivazione TELLO
-  stampa("CONTROLLO: Comunicazione con il Tello...\n");
+  stampa("CONTROLLO: Commutazione TELLO in modo comando...\n");
   std::lock_guard<std::mutex> guard{ m_MtxControl };
   m_qControl.push([=]() {
     if (int(UDPsocket::Status::SendError)
@@ -139,7 +156,7 @@ bool TelloDrone::connect() {
     }
     else {
       m_bControlMsgSent = true;
-      stampa("CONTROLLO:  Attesa esito...\n");
+      stampa("CONTROLLO:  Attesa esito (modo comando)...\n");
       return true;
     }
     });
@@ -161,7 +178,7 @@ bool TelloDrone::takeoff() {
     }
     else {
       m_bControlMsgSent = true;
-      stampa("CONTROLLO:  Attesa esito...\n");
+      stampa("CONTROLLO:  Attesa esito (takeoff)...\n");
       return true;
     }
     });
@@ -181,7 +198,7 @@ bool TelloDrone::land() {
     }
     else {
       m_bControlMsgSent = true;
-      stampa("CONTROLLO:  Attesa esito...\n");
+      stampa("CONTROLLO:  Attesa esito (land)...\n");
       return true;
     }
     });
@@ -199,7 +216,7 @@ bool TelloDrone::emergency() {
   }
   else {
     m_bControlMsgSent = true;
-    stampa("CONTROLLO:  Attesa esito...\n");
+    stampa("CONTROLLO:  Attesa esito (emergency)...\n");
   }
   return true;
 }
@@ -217,7 +234,7 @@ bool TelloDrone::stop() {
     }
     else {
       m_bControlMsgSent = true;
-      stampa("CONTROLLO:  Attesa esito...\n");
+      stampa("CONTROLLO:  Attesa esito (stop)...\n");
       return true;
     }
     });
@@ -470,14 +487,18 @@ bool TelloDrone::mission_pad_enable(bool enabled) {
   return true;
 }
 
-void TelloDrone::wait_for_result(size_t ms) {
-  uint32_t uExitLoop = 0;
+void TelloDrone::wait_for_result(size_t ms, size_t tmout) {
+  size_t uExitLoop = 0, uElapsed = 0;
   while (0 == uExitLoop) {
     { std::lock_guard<std::mutex> guard{ m_MtxControl };
     if (!m_bWaitForResponse && !m_bControlMsgSent && !m_fnCurCmd) {
       uExitLoop = 1;
     } }
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+    uElapsed += ms;
+    if (uElapsed >= tmout) {
+      uExitLoop = 1;
+    }
   }
 }
 

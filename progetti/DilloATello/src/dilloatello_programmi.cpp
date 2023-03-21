@@ -5,6 +5,7 @@
  * ========================================================================== */
 #include "dilloatello_dillo_linguaggio_didattico.h"
 
+#if 0
 programma_inizio
   crea_oggetto_da_astrazione(TelloDrone) dando_nome(topolino)
   messaggia_oggetto(topolino, connect, ())
@@ -29,4 +30,14 @@ programma_inizio
     e_anche (altezza > 200)
     e_anche (distanza_y_percorsa <= 1000))
   messaggia_oggetto(topolino, land, ())
+programma_fine
+#endif
+
+programma_inizio
+  crea_oggetto_da_astrazione(TelloDrone) dando_nome(topolino)
+  messaggia_oggetto(topolino, connect, ())
+//  messaggia_oggetto(topolino, takeoff, ())
+//  messaggia_oggetto(topolino,    go_U, (50))
+  fai_dormire_il_processo_per_millisecondi(10000)
+//  messaggia_oggetto(topolino, land, ())
 programma_fine
