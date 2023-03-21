@@ -69,7 +69,7 @@ add_executable(${target} ${ext_cpp}
   src/dilloatello_tello.h
   src/dilloatello_gui_commands.h
   src/dilloatello_gui_console.h
-  src/UDPSocket.h
+  src/UDPsocket.h
 )
 
 target_include_directories(${target} PUBLIC src src/ext ${detected_incs})
