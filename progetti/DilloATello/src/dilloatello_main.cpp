@@ -12,16 +12,24 @@
 
 int main(int argc, char* argv[])
 {
-  // Chiude la console
+  // Chiude la console di Windows
 #ifdef WIN32
   ::FreeConsole();
 #endif
+
+  // Stampa un messaggio di avvertimento
+  std::fprintf(stderr
+    , "[NOTA]: La cartella fonts deve essere presente"
+      " nella cartella di lavoro corrente.\n");
 
   // Costruisce la finestra di rendering dell'applicazione
   sf::RenderWindow mainWindow(sf::VideoMode({ 1280, 720 })
     , "DILLO A TELLO, del Prof. Michele Iacobellis - COLAMONICO");
   mainWindow.setFramerateLimit(60);
-  ImGui::SFML::Init(mainWindow);
+  if (!ImGui::SFML::Init(mainWindow)) {
+    std::fprintf(stderr, "[ERRORE GENERALE]: Non posso costruire la finestra\n");
+    return 1;
+  }
 
   // Costruisce i componenti fondamentali della GUI
   dillo::GuiCommands guiCmd;
