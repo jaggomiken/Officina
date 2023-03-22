@@ -590,7 +590,7 @@ void TelloDrone::m_ParseStatus(const std::string& in) {
   std::vector<std::string> vTokens = split(in, ";");
 
   /*
-   * Come restituito da TELLO, ecco le propriet‡, nell'ordine di arrivo:
+   * Come restituito da TELLO, ecco le propriet√†, nell'ordine di arrivo:
    *  0 mid:-1
    *  1 x:-100
    *  2 y:-100

@@ -26,9 +26,9 @@ static std::vector<PropDesc> gvPropDescs{
     {            "pitch",                 "Pitch", 1, 0.0f }
   , {             "roll",                  "Roll", 1, 0.0f }
   , {              "yaw",                   "Yaw", 1, 0.0f }
-  , {          "speed_x",    u8"Velocit‡ Lungo X", 1, 0.0f }
-  , {          "speed_y",    u8"Velocit‡ Lungo Y", 1, 0.0f }
-  , {          "speed_z",    u8"Velocit‡ Lungo Z", 1, 0.0f }
+  , {          "speed_x",    u8"Velocit√† Lungo X", 1, 0.0f }
+  , {          "speed_y",    u8"Velocit√† Lungo Y", 1, 0.0f }
+  , {          "speed_z",    u8"Velocit√† Lungo Z", 1, 0.0f }
   , {   "temperature_lo",       "Temperatura Max", 1, 0.0f }
   , {   "temperature_hi",       "Temperatura Min", 1, 0.0f }
   , {   "time_of_flight",         "Tempo di Volo", 1, 0.0f }

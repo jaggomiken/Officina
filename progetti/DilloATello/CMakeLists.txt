@@ -75,3 +75,6 @@ add_executable(${target} ${ext_cpp}
 target_include_directories(${target} PUBLIC src src/ext ${detected_incs})
 target_link_libraries(${target} LINK_PUBLIC ${libs})
 set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
+if (MSVC)
+	target_compile_options(${target} PUBLIC /utf-8)
+endif()

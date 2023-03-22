@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
       guiCmd.draw();
       guiEdt.draw();
 
-      // Qui si può disegnare qualcosa (SOLO DIMOSTRATIVO)
+      // Qui si puÃ² disegnare qualcosa (SOLO DIMOSTRATIVO)
       // sf::CircleShape shape(100.f);
       // shape.setFillColor(sf::Color::Green);
       mainWindow.clear();
