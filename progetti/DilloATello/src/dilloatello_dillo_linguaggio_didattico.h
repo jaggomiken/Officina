@@ -21,6 +21,9 @@
 
 #define numero_intero_positivo size_t
 #define numero_con_la_virgola float
+#define bandierina_vero_falso bool
+#define falso false
+#define vero true
 
 #define crea_oggetto_da_astrazione(tipo) tipo
 #define dando_nome(nome) nome;
@@ -46,7 +49,7 @@
   } while (a);
 #define se_e_vero_che(a)      if (a)
 #define allora_fai_questo     {
-#define altrimenti_fai_questo else {
+#define altrimenti_fai_questo } else {
 
 #define fai_dormire_il_processo_per_millisecondi(x) \
   stampa("IL PROCESSO DORME PER %u ms...\n",x); \
@@ -62,8 +65,8 @@
       , st.u.status.height_from_floor);\
   } while(0);
 
-#define chiedi_informazione_a(a)\
-  a.lastStatus().u.status
+#define chiedi_informazione_a(a) a.lastStatus().u.status
+#define chiedi_a(a,m,c) a.m c;
 #define cosa(a) .a;
 #define e_anche &&
 
