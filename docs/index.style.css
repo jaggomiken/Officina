@@ -89,3 +89,8 @@ p.smallfont {
 a {
   text-decoration: none;
 }
+
+div.article_title {
+  font-family: "Courier New";
+  font-weight: bold;
+}
