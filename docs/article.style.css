@@ -68,7 +68,7 @@
 }
 
 h1{
-  font-size: 26pt;
+  font-size: 24pt;
 }
 
 span.hi {
@@ -87,6 +87,10 @@ span.hi {
 hr{
   border-width: 1px;
   border-color: rgb(200, 200, 224, 255);
+}
+
+p {
+  font-size: 13.5pt;
 }
 
 p.smallfont {

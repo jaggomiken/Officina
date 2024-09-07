@@ -5,12 +5,16 @@
   <!-- ===================================================================== -->
 */
 
+/* ===== GESTIONE WEB FONTS ===== */
+
 @font-face {
   font-family: 'didact';
   src: url('fonts/DidactGothic-Regular.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
+
+/* ===== GESTIONE IMAGE GALLERY ===== */
 
 .image-gallery {
     display: flex;
@@ -39,7 +43,8 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Responsive adjustments */
+/* ===== GESTIONE RESPONSIVE ===== */
+
 @media (max-width: 1024px) {
     .image-gallery a {
         flex: 1 1 calc(33.33% - 10px); /* 3 images per row */
@@ -61,6 +66,8 @@
     }
 }
 
+/* ===== GESTIONE STILE PAGINA ===== */
+
 * { 
   font-family: "didact";
   background-color: rgb(239, 233, 224, 255);
@@ -68,7 +75,7 @@
 }
 
 h1{
-  font-size: 26pt;
+  font-size: 24pt;
 }
 
 span.hi {
@@ -87,6 +94,10 @@ span.hi {
 hr{
   border-width: 1px;
   border-color: rgb(200, 200, 224, 255);
+}
+
+p {
+  font-size: 13.5pt;
 }
 
 p.smallfont {
