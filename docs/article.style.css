@@ -5,6 +5,13 @@
   <!-- ===================================================================== -->
 */
 
+@font-face {
+  font-family: 'didact';
+  src: url('fonts/DidactGothic-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 .image-gallery {
     display: flex;
     flex-wrap: wrap;
@@ -55,7 +62,7 @@
 }
 
 * { 
-  font-family: "Andale Mono";
+  font-family: "didact";
   background-color: rgb(239, 233, 224, 255);
   color: black;
 }
@@ -84,6 +91,10 @@ hr{
 
 p.smallfont {
   font-size: 10pt;
+}
+
+p.article {
+    line-height: 1.8;
 }
 
 a {
