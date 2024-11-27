@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 {
   // Chiude la console di Windows
 #ifdef WIN32
-  ::FreeConsole();
+  //::FreeConsole();
 #endif
 
   // Stampa un messaggio di avvertimento
