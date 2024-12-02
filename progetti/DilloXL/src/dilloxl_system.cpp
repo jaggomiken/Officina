@@ -49,3 +49,21 @@ void dilloxl::dump_data(const std::string& title
     std::fprintf(stdout, "%c", pData[k]);  }
   std::fprintf(stdout, "\n%s END.\n", title.c_str());
 }
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * FUNCTION
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+dilloxl::Timer::Timer() 
+: t0{ std::chrono::system_clock::now() }
+{
+  
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * FUNCTION
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+std::chrono::duration<int64_t> dilloxl::Timer::elapsed() 
+{
+  auto now = std::chrono::system_clock::now();
+  return std::chrono::duration_cast<std::chrono::seconds>(now - t0);
+}

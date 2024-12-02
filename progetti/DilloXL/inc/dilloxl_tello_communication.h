@@ -56,6 +56,8 @@ namespace dilloxl {
     void setStatusCallback(const StatusCallback&);
     void setVideosCallback(const VideoSCallback&);
 
+    bool isLinkAlive() const;
+
   private:    
     sf::UdpSocket m_SockControl;
     sf::UdpSocket m_SockStatus;
@@ -66,10 +68,13 @@ namespace dilloxl {
     size_t m_szNControlPacketsOt;
     size_t m_szNStatusPackets;
     size_t m_szNVideoPackets;
+    size_t m_szNStatusPacketsLast;
 
     ContrlCallback m_contrlcb;
     StatusCallback m_statuscb;
     VideoSCallback m_videoscb;
+    bool m_bLinkAlive;
+    Timer m_timerKeepAlive;
 
     void m_onStatusUnconnected();
     void m_onStatusConnecting(); 

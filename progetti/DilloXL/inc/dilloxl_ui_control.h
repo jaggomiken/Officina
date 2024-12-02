@@ -9,14 +9,14 @@
 #include "dilloxl_system.h"
 
 namespace dilloxl {
-  class GuiCommands {
+  class GuiControl {
   public:
-    GuiCommands();
-    GuiCommands(const GuiCommands&) = delete;
-    GuiCommands(GuiCommands&&) noexcept;
-    GuiCommands& operator=(const GuiCommands&) = delete;
-    GuiCommands& operator=(GuiCommands&&) noexcept;
-    virtual ~GuiCommands();
+    GuiControl();
+    GuiControl(const GuiControl&) = delete;
+    GuiControl(GuiControl&&) noexcept;
+    GuiControl& operator=(const GuiControl&) = delete;
+    GuiControl& operator=(GuiControl&&) noexcept;
+    virtual ~GuiControl();
     virtual void draw();
   private:
     class Impl; Impl* m_pImpl;

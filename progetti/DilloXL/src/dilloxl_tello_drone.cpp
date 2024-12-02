@@ -40,7 +40,8 @@ dilloxl::TelloDrone::TelloDrone(TelloCommunication& com)
     }
   });
   com.setContrlCallback([=](const uint8_t* pData, size_t szSizeInByte) {
-    dump_data("DRONE-CONTROL-RESPONSE", pData, szSizeInByte);
+    m_strLastCmdRes = std::string{ 
+      reinterpret_cast<const char*>(pData), szSizeInByte };
   });  
 }
 
@@ -79,6 +80,15 @@ void dilloxl::TelloDrone::emergency()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::reset()
+{
+  ::memset(&m_status, 0, sizeof(m_status));
+  m_strLastCmdRes = "";
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 bool dilloxl::TelloDrone::isActive() const
 {
   return m_bIsActive;
@@ -90,6 +100,14 @@ bool dilloxl::TelloDrone::isActive() const
 const dilloxl::TelloDrone::Status& dilloxl::TelloDrone::lastStatus() const
 {
   return m_status;
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+const std::string& dilloxl::TelloDrone::lastCommandResult() const
+{
+  return m_strLastCmdRes;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

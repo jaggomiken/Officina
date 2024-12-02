@@ -94,56 +94,42 @@ dilloxl::GuiEditor::Impl::~Impl()
 void dilloxl::GuiEditor::Impl::draw()
 {
 	auto cpos = m_editor.GetCursorPosition();
-	ImGui::Begin("DILLO-A-TELLO", nullptr
+	ImGui::Begin("PROGRAMMA", nullptr
 		, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
 	ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
-	if (ImGui::BeginMenuBar())
-	{
-		if (ImGui::BeginMenu("Modifica"))
-		{
+	if (ImGui::BeginMenuBar()) {
+		if (ImGui::BeginMenu("Modifica")) {
 			bool ro = m_editor.IsReadOnly();
 			if (ImGui::MenuItem("Sola-Lettura", nullptr, &ro)) { m_editor.SetReadOnly(ro); }
-				
 			ImGui::Separator();
-
 			if (ImGui::MenuItem("Annulla", "ALT-Backspace", nullptr, !ro && m_editor.CanUndo())) {
 				m_editor.Undo();
 			}
-				
 			if (ImGui::MenuItem("Rifai", "Ctrl-Y", nullptr, !ro && m_editor.CanRedo())) {
 				m_editor.Redo();
 			}
-				
 			ImGui::Separator();
-
 			if (ImGui::MenuItem("Copia", "Ctrl-C", nullptr, m_editor.HasSelection())) {
 				m_editor.Copy();
 			}
-				
 			if (ImGui::MenuItem("Taglia", "Ctrl-X", nullptr, !ro && m_editor.HasSelection())) {
 				m_editor.Cut();
 			}
-				
 			if (ImGui::MenuItem("Cancella", "Del", nullptr, !ro && m_editor.HasSelection())) {
 				m_editor.Delete();
 			}
-				
 			if (ImGui::MenuItem("Incolla", "Ctrl-V", nullptr, !ro && ImGui::GetClipboardText() != nullptr)) {
 				m_editor.Paste();
 			}
-
 			ImGui::Separator();
-
 			if (ImGui::MenuItem("Seleziona Tutto", nullptr, nullptr)) {
 				m_editor.SetSelection(TextEditor::Coordinates()
 					, TextEditor::Coordinates(m_editor.GetTotalLines(), 0));
 			}
-
 			ImGui::EndMenu();
 		}
 
-		if (ImGui::BeginMenu("Vista"))
-		{
+		if (ImGui::BeginMenu("Vista")) {
 			if (ImGui::MenuItem("Scura")) {
 				m_editor.SetPalette(TextEditor::GetDarkPalette());
 			}

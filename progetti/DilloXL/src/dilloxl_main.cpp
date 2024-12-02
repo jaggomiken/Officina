@@ -8,15 +8,14 @@
 #include "dilloxl_ui_console.h"
 #include "dilloxl_ui_control.h"
 #include "dilloxl_ui_editor.h"
-
 #include <imgui.h>
 #include <imgui-SFML.h>
 
-int main() 
+int main(int argc, char* argv[]) 
 {
   const float scale = 2.0f;
-  sf::RenderWindow window(sf::VideoMode({1920, 1080})
-    , "DILLO XL - By Prof. Michele Iacobellis");
+  sf::RenderWindow window(sf::VideoMode({ 1920, 1080 })
+    , "DILLO XL Versione 1.0 - By Prof. Michele Iacobellis");
 
   window.setFramerateLimit(60);
   if (!ImGui::SFML::Init(window)) {
@@ -45,7 +44,7 @@ int main()
   dilloxl::TelloCommunication tellocom;
   dilloxl::TelloDrone drone{ tellocom };
 
-  dilloxl::GuiCommands ui_Commands;
+  dilloxl::GuiControl ui_Control;
   dilloxl::GuiEditor ui_Editor;
   bool bShowExitDialog = false, bQuitApp = false;;
 
@@ -67,7 +66,11 @@ int main()
       ImGui::OpenPopup("Domanda Importante");
     }
 
-    if (ImGui::BeginPopupModal("Domanda Importante", &bShowExitDialog)) {
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    if (ImGui::BeginPopupModal("Domanda Importante", &bShowExitDialog
+        , ImGuiWindowFlags_AlwaysAutoResize
+        | ImGuiWindowFlags_NoResize)) {
       ImGui::TextUnformatted("Sei sicuro di voler chiudere ?");
       if (ImGui::Button(     "OK")) { 
         ImGui::CloseCurrentPopup(); 
@@ -85,26 +88,8 @@ int main()
 
     if (bQuitApp) { window.close(); }
 
-    ImGui::Begin("Centro Controllo Tello");
-    if (ImGui::Button("Connetti")) { tellocom.tryLink(); }
-    ImGui::SameLine();
-    if (ImGui::Button("Decolla")) { drone.takeoff(); }
-    ImGui::SameLine();
-    if (ImGui::Button("Atterra")) { drone.land(); }
-    ImGui::Text("STATO: %s | ", tellocom.lastStatus().c_str());
-    ImGui::SameLine();
-    ImGui::Text("N. Pacchetti Controllo in/out: %zu/%zu"
-      , tellocom.nCtrlPktsIn(), tellocom.nCtrlPktsOut());
-    ImGui::Text("N. Pacchetti Stato: %zu | "
-      , tellocom.nStatusPkts());
-    ImGui::SameLine();
-    ImGui::Text("N. Pacchetti Video: %zu"
-      , tellocom.nVideoPkts());
-    ImGui::Text("ERRORE: %s", tellocom.lastError().c_str());
-    ImGui::End();
-
-    ui_Editor.draw();
-    ui_Commands.draw();
+     ui_Editor.draw();
+    ui_Control.draw();
 
     window.clear();
     ImGui::SFML::Render(window);

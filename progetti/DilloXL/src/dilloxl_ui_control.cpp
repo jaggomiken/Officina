@@ -15,10 +15,16 @@
  * STRUCT
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 struct PropDesc {
+  bool checkchangedandwrite(float v) {
+    if (fValue == v) { uChanged = 0;             }
+    else             { uChanged = 1; fValue = v; }
+    return (1 == uChanged);
+  }
+
   std::string name;
   std::string labl;
-  uint32_t uType;
-  float fValue;
+     uint32_t uChanged;
+        float fValue;
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -47,20 +53,21 @@ static std::vector<PropDesc> gvPropDescs{
  /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * CLASS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-class dilloxl::GuiCommands::Impl {
+class dilloxl::GuiControl::Impl {
 public:
   Impl();
-  ~Impl();
+ ~Impl();
   void draw();
 
   std::thread m_threadTello;
   std::atomic_size_t m_szThreadStarted;
+  size_t m_szNStatusPktsLast;
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-dilloxl::GuiCommands::GuiCommands()
+dilloxl::GuiControl::GuiControl()
   : m_pImpl{ nullptr }
 {
   m_pImpl = new(std::nothrow) Impl{};
@@ -70,7 +77,7 @@ dilloxl::GuiCommands::GuiCommands()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-dilloxl::GuiCommands::GuiCommands(GuiCommands&& oth) noexcept
+dilloxl::GuiControl::GuiControl(GuiControl&& oth) noexcept
   : m_pImpl{ nullptr }
 {
   m_pImpl = oth.m_pImpl;
@@ -80,7 +87,7 @@ dilloxl::GuiCommands::GuiCommands(GuiCommands&& oth) noexcept
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-dilloxl::GuiCommands& dilloxl::GuiCommands::operator=(GuiCommands&& oth) noexcept
+dilloxl::GuiControl& dilloxl::GuiControl::operator=(GuiControl&& oth) noexcept
 {
   delete m_pImpl;
   m_pImpl = oth.m_pImpl;
@@ -91,7 +98,7 @@ dilloxl::GuiCommands& dilloxl::GuiCommands::operator=(GuiCommands&& oth) noexcep
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-dilloxl::GuiCommands::~GuiCommands()
+dilloxl::GuiControl::~GuiControl()
 {
   delete m_pImpl;
   m_pImpl = nullptr;
@@ -100,7 +107,7 @@ dilloxl::GuiCommands::~GuiCommands()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-void dilloxl::GuiCommands::draw()
+void dilloxl::GuiControl::draw()
 {
   m_pImpl->draw();
 }
@@ -108,15 +115,16 @@ void dilloxl::GuiCommands::draw()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-dilloxl::GuiCommands::Impl::Impl()
-  : m_szThreadStarted { 0 }
+dilloxl::GuiControl::Impl::Impl()
+  : m_szThreadStarted   { 0 }
+  , m_szNStatusPktsLast { 0 }
 {
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-dilloxl::GuiCommands::Impl::~Impl()
+dilloxl::GuiControl::Impl::~Impl()
 {
   if (0 != m_szThreadStarted) {
     if (m_threadTello.joinable()) {
@@ -128,32 +136,66 @@ dilloxl::GuiCommands::Impl::~Impl()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-void dilloxl::GuiCommands::Impl::draw()
+void dilloxl::GuiControl::Impl::draw()
 {
   auto& drone = TelloDrone::Get();
   const auto& st = drone.lastStatus();
-  gvPropDescs[ 0].fValue = st.u.status.pitch;
-  gvPropDescs[ 1].fValue = st.u.status.roll;
-  gvPropDescs[ 2].fValue = st.u.status.yaw;
-  gvPropDescs[ 3].fValue = st.u.status.speed_x;
-  gvPropDescs[ 4].fValue = st.u.status.speed_y;
-  gvPropDescs[ 5].fValue = st.u.status.speed_z;
-  gvPropDescs[ 6].fValue = st.u.status.temperature_lo;
-  gvPropDescs[ 7].fValue = st.u.status.temperature_hi;
-  gvPropDescs[ 8].fValue = st.u.status.time_of_flight;
-  gvPropDescs[ 9].fValue = st.u.status.height_from_floor;
-  gvPropDescs[10].fValue = st.u.status.battery_level;
-  gvPropDescs[11].fValue = st.u.status.barometer_cm;
-  gvPropDescs[12].fValue = st.u.status.motor_time;
-  gvPropDescs[13].fValue = st.u.status.acceleration_x;
-  gvPropDescs[14].fValue = st.u.status.acceleration_y;
-  gvPropDescs[15].fValue = st.u.status.acceleration_z;
-  gvPropDescs[16].fValue = st.sequence;
+  gvPropDescs[ 0].checkchangedandwrite(st.u.status.pitch);
+  gvPropDescs[ 1].checkchangedandwrite(st.u.status.roll);
+  gvPropDescs[ 2].checkchangedandwrite(st.u.status.yaw);
+  gvPropDescs[ 3].checkchangedandwrite(st.u.status.speed_x);
+  gvPropDescs[ 4].checkchangedandwrite(st.u.status.speed_y);
+  gvPropDescs[ 5].checkchangedandwrite(st.u.status.speed_z);
+  gvPropDescs[ 6].checkchangedandwrite(st.u.status.temperature_lo);
+  gvPropDescs[ 7].checkchangedandwrite(st.u.status.temperature_hi);
+  gvPropDescs[ 8].checkchangedandwrite(st.u.status.time_of_flight);
+  gvPropDescs[ 9].checkchangedandwrite(st.u.status.height_from_floor);
+  gvPropDescs[10].checkchangedandwrite(st.u.status.battery_level);
+  gvPropDescs[11].checkchangedandwrite(st.u.status.barometer_cm);
+  gvPropDescs[12].checkchangedandwrite(st.u.status.motor_time);
+  gvPropDescs[13].checkchangedandwrite(st.u.status.acceleration_x);
+  gvPropDescs[14].checkchangedandwrite(st.u.status.acceleration_y);
+  gvPropDescs[15].checkchangedandwrite(st.u.status.acceleration_z);
+  gvPropDescs[16].checkchangedandwrite(st.sequence);
 
   if (ImGui::Begin("Comandi & Stato")) {
+    if (ImGui::Button("Connetti")) { drone.com().tryLink(); }
+    ImGui::SameLine();
+    if (ImGui::Button( "Decolla")) { drone.takeoff(); }
+    ImGui::SameLine();
+    if (ImGui::Button( "Atterra")) { drone.land(); }
+    ImGui::SameLine();
+    if (ImGui::Button(   "Reset")) { drone.reset(); }
+    ImGui::Separator();
+    ImGui::Text("STATO: %-16s | ", drone.com().lastStatus().c_str());
+    ImGui::SameLine();
+    if (drone.com().isLinkAlive()) {
+      ImGui::TextColored(ImVec4{ 0, 1.0, 0, 1.0 }
+        , "%8s", "CONNESSO");
+        m_szNStatusPktsLast = drone.com().nStatusPkts();
+    } else {
+      ImGui::TextColored(ImVec4{ 1.0, 0, 0, 1.0 }
+        , "%8s", "ASSENTE");
+    }
+    ImGui::Separator();
+    ImGui::Text("ESITO ULTIMO COMANDO: %s"
+      , drone.lastCommandResult().c_str());
+    ImGui::Separator();
+    ImGui::Text(" N. Pacchetti Controllo In: %zu"
+      , drone.com().nCtrlPktsIn());
+    ImGui::Text("N. Pacchetti Controllo Out: %zu"
+      , drone.com().nCtrlPktsOut());
+    ImGui::Text("        N. Pacchetti Stato: %zu"
+      , drone.com().nStatusPkts());
+    ImGui::Text("        N. Pacchetti Video: %zu"
+      , drone.com().nVideoPkts());
+    ImGui::Separator();
+    ImGui::Text("ERRORE: %s", drone.com().lastError().c_str());
+    ImGui::Separator();
+
     bool bDis = false;
     if (0 != m_szThreadStarted) { ImGui::BeginDisabled(); bDis = true; }
-    if (ImGui::Button("Avvia")) {
+    if (ImGui::Button("Avvia Programma")) {
       if (m_threadTello.joinable()) { m_threadTello.join(); }
       m_threadTello = std::thread([=]() {
         m_szThreadStarted = 1;
@@ -170,27 +212,34 @@ void dilloxl::GuiCommands::Impl::draw()
     if (!drone.isActive()) { ImGui::BeginDisabled(); bTelloDis = true; }
     ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(240, 0, 0, 255));
     if (ImGui::Button("Emergenza")) {
-        drone.emergency();
+      drone.emergency();
     }
     if (bTelloDis) { ImGui::EndDisabled(); }
     ImGui::PopStyleColor();
-    ImGui::SameLine();
-    ImGui::Text("STATO: ");
+    ImGui::Separator();
+    ImGui::Text("STATO PROGRAMMA: ");
     ImGui::SameLine();
     if (0 != m_szThreadStarted) {
       ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 240, 0, 255));
-      ImGui::Text("ACCESO");
+      ImGui::Text("ESECUZIONE");
       ImGui::PopStyleColor();
     }
     else {
       ImGui::Text("SPENTO");
     }
     ImGui::Separator();
+    ImGui::TextUnformatted("STATO DEL DRONE TELLO");
+    ImGui::Separator();
     for (const auto& item : gvPropDescs) {
-      ImGui::SetNextItemWidth(ImGui::GetFontSize() * 8);
-      ImGui::TextColored({}, "%.2f", item.fValue);
-      ImGui::SameLine();
-      ImGui::TextColored({}, "%s", item.labl.c_str());
+      if (1 == item.uChanged) {
+        ImGui::TextColored({1.0, 1.0, 1.0, 1.0 }, "> %+8.2f", item.fValue);
+        ImGui::SameLine();
+        ImGui::TextColored({1.0, 1.0, 1.0, 1.0 }, "%s <", item.labl.c_str());
+      } else {
+        ImGui::TextColored({0.7, 0.7, 0.7, 1.0 }, "  %+8.2f", item.fValue);
+        ImGui::SameLine();
+        ImGui::TextColored({0.7, 0.7, 0.7, 1.0 }, "%s  ", item.labl.c_str());
+      }
     }
     ImGui::End();
   }

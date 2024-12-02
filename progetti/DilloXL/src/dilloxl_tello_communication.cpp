@@ -8,7 +8,8 @@
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * MACROS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-#define DILLOXL_TELLECOMM_DEBUG                                            0
+#define DILLOXL_TELLOCOMM_DEBUG                                            0
+#define DILLOXL_TELLOCOMM_LINK_DOWN_TIMEOUT_S                              2
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
@@ -37,6 +38,8 @@ dilloxl::TelloCommunication::TelloCommunication()
 , m_szNControlPacketsOt {                  0 }
 , m_szNStatusPackets    {                  0 }
 , m_szNVideoPackets     {                  0 }
+, m_szNStatusPacketsLast{                  0 }
+, m_bLinkAlive          {              false }
 {
 
 }
@@ -54,6 +57,14 @@ dilloxl::TelloCommunication::~TelloCommunication()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::tryLink()
 {
+  m_strLastErr = "Nessuno";
+  m_szNControlPacketsIn  =     0;
+  m_szNControlPacketsOt  =     0;
+  m_szNStatusPackets     =     0;
+  m_szNVideoPackets      =     0;
+  m_szNStatusPacketsLast =     0;
+  m_bLinkAlive           = false;
+  
   m_SockControl.unbind();
    m_SockStatus.unbind();
     m_SockVideo.unbind();
@@ -155,6 +166,14 @@ void dilloxl::TelloCommunication::setVideosCallback(const VideoSCallback& cb)
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+bool dilloxl::TelloCommunication::isLinkAlive() const
+{
+  return m_bLinkAlive;
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::m_onStatusUnconnected()
 {
   // send activation command...
@@ -188,7 +207,7 @@ void dilloxl::TelloCommunication::m_onStatusConnecting()
     m_strLastErr = "Nessuno";
     m_st = Status::kCONNECTED;
     m_szNControlPacketsIn++;
-#if DILLOXL_TELLECOMM_DEBUG == 1
+#if DILLOXL_TELLOCOMM_DEBUG == 1
     dump_data("CTRL", btData, szInBytes);
 #endif    
     break;
@@ -225,7 +244,7 @@ void dilloxl::TelloCommunication::m_onStatusWorking()
       m_strLastErr = "Nessuno";
       m_st = Status::kWORKING;
       m_szNControlPacketsIn++;
-#if DILLOXL_TELLECOMM_DEBUG == 1
+#if DILLOXL_TELLOCOMM_DEBUG == 1
       dump_data("CONTROL", btData, szInBytes);
 #endif
       if (m_contrlcb) { m_contrlcb(btData, szInBytes); }
@@ -239,7 +258,7 @@ void dilloxl::TelloCommunication::m_onStatusWorking()
     }
   }
 
-  // ...wait for status packets
+  // ...wait for status packets (use this for determining alive)
   { auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
     auto ret = m_SockStatus.receive(btData, sizeof(btData), szInBytes, from, u2p);
     switch (ret) {
@@ -247,7 +266,7 @@ void dilloxl::TelloCommunication::m_onStatusWorking()
       m_strLastErr = "Nessuno";
       m_st = Status::kWORKING;
       m_szNStatusPackets++;
-#if DILLOXL_TELLECOMM_DEBUG == 1
+#if DILLOXL_TELLOCOMM_DEBUG == 1
       dump_data("STATUS", btData, szInBytes);
 #endif
       if (m_statuscb) { m_statuscb(btData, szInBytes); }
@@ -279,6 +298,23 @@ void dilloxl::TelloCommunication::m_onStatusWorking()
       break;
     }
   }
+
+  // check status packets number change
+  if (m_szNStatusPackets <= m_szNStatusPacketsLast) {
+    if (m_timerKeepAlive.elapsed().count() 
+          >= DILLOXL_TELLOCOMM_LINK_DOWN_TIMEOUT_S) {
+      m_strLastErr = "Collegamento interrotto";
+      m_bLinkAlive = false;
+      m_st = Status::kERROR;
+    } else {
+      m_bLinkAlive = true;
+    }
+  } else {
+    m_timerKeepAlive = {}; // reset timer
+  }
+
+  // store current number of status packets and check timeout
+  m_szNStatusPacketsLast = m_szNStatusPackets;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -294,7 +330,7 @@ void dilloxl::TelloCommunication::m_onStatusEmergency()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::m_onStatusError()  
 {
-
+  m_st = Status::kUNDEFINED;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -302,5 +338,5 @@ void dilloxl::TelloCommunication::m_onStatusError()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::m_onStatusUndefined()
 {
-
+  m_st = Status::kUNDEFINED;
 }

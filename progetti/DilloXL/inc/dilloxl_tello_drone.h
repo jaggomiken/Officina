@@ -53,14 +53,19 @@ namespace dilloxl {
     void takeoff();
     void land();
     void emergency();
+    void reset();
 
     bool isActive() const;
     const Status& lastStatus() const;
+    const std::string& lastCommandResult() const;
+
+    TelloCommunication& com() { return m_com; }
 
   private:
     TelloCommunication& m_com;
     Status m_status;
     bool m_bIsActive;
+    std::string m_strLastCmdRes;
   };
 }
 
