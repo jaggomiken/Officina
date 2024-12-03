@@ -18,6 +18,7 @@ namespace dilloxl {
     static constexpr  const char* kTELLO_IPv4            = "192.168.10.1";
     static constexpr const size_t kTELLO_INTERCOMMAND_MS = 100;
 
+    enum class SendMode : uint32_t { kNORMAL = 0, kFORCE = 1 };
     enum class Status : uint32_t {
         kUNDEFINED   = 0
       , kUNCONNECTED = 1
@@ -46,43 +47,21 @@ namespace dilloxl {
     const std::string& lastError() const;
     std::string lastStatus() const;
 
-    size_t  nCtrlPktsIn() const { return m_szNControlPacketsIn; }
-    size_t nCtrlPktsOut() const { return m_szNControlPacketsOt; }
-    size_t  nStatusPkts() const { return m_szNStatusPackets; }
-    size_t   nVideoPkts() const { return m_szNVideoPackets; }
+    size_t  nCtrlPktsIn() const;
+    size_t nCtrlPktsOut() const;
+    size_t  nStatusPkts() const;
+    size_t   nVideoPkts() const;
 
-    void send(const std::string&);
+    void send(const std::string&, SendMode = SendMode::kNORMAL);
     void setContrlCallback(const ContrlCallback&);
     void setStatusCallback(const StatusCallback&);
     void setVideosCallback(const VideoSCallback&);
 
     bool isLinkAlive() const;
+    bool isWaitingForResponse() const;
 
-  private:    
-    sf::UdpSocket m_SockControl;
-    sf::UdpSocket m_SockStatus;
-    sf::UdpSocket m_SockVideo;
-    Status m_st;
-    std::string m_strLastErr;
-    size_t m_szNControlPacketsIn;
-    size_t m_szNControlPacketsOt;
-    size_t m_szNStatusPackets;
-    size_t m_szNVideoPackets;
-    size_t m_szNStatusPacketsLast;
-
-    ContrlCallback m_contrlcb;
-    StatusCallback m_statuscb;
-    VideoSCallback m_videoscb;
-    bool m_bLinkAlive;
-    Timer m_timerKeepAlive;
-
-    void m_onStatusUnconnected();
-    void m_onStatusConnecting(); 
-    void m_onStatusConnected();  
-    void m_onStatusWorking();    
-    void m_onStatusEmergency();  
-    void m_onStatusError();      
-    void m_onStatusUndefined();
+  private:
+    class Impl; Impl* m_pImpl;
   };
 }
 

@@ -13,7 +13,6 @@
 
 int main(int argc, char* argv[]) 
 {
-  const float scale = 2.0f;
   sf::RenderWindow window(sf::VideoMode({ 1920, 1080 })
     , "DILLO XL Versione 1.0 - By Prof. Michele Iacobellis");
 
@@ -23,6 +22,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  const float scale = 2.0f;
   auto& style = ImGui::GetStyle();
   style.FrameRounding   = 3;
   style.ChildRounding   = 3;

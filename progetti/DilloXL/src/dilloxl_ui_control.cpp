@@ -190,6 +190,9 @@ void dilloxl::GuiControl::Impl::draw()
     ImGui::Text("        N. Pacchetti Video: %zu"
       , drone.com().nVideoPkts());
     ImGui::Separator();
+    ImGui::Text("%s", drone.com().isWaitingForResponse()
+      ? "In attesa di risposta..." : "Risposta ricevuta.");
+    ImGui::Separator();
     ImGui::Text("ERRORE: %s", drone.com().lastError().c_str());
     ImGui::Separator();
 

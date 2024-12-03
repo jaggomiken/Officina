@@ -14,6 +14,28 @@ static bool ParseStatus(const std::string& in
   , dilloxl::TelloDrone::Status& st);
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * DECLARATION
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+class dilloxl::TelloDrone::Impl {
+public:
+  Impl(TelloCommunication& com)
+  : m_com       {   com }
+  , m_bIsActive { false }
+  {
+    ::memset(&m_status, 0, sizeof(m_status));
+  }
+
+ ~Impl() {
+
+  }
+
+  TelloCommunication& m_com;
+  Status m_status;
+  bool m_bIsActive;
+  std::string m_strLastCmdRes;
+};
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 dilloxl::TelloDrone* gpDrone = nullptr;
@@ -26,21 +48,23 @@ dilloxl::TelloDrone& dilloxl::TelloDrone::Get() {
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 dilloxl::TelloDrone::TelloDrone(TelloCommunication& com)
-: m_com{ com }
+: m_pImpl{ nullptr }
 {
+  m_pImpl = new(std::nothrow) Impl{ com };
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Allocazione fallita");
   gpDrone = this;
-  ::memset(&m_status, 0, sizeof(m_status));
+
   com.setStatusCallback([=](const uint8_t* pData, size_t szSizeInByte) {
     std::string str{ reinterpret_cast<const char*>(pData), szSizeInByte };
-    if (ParseStatus(str, m_status)) {
-      m_bIsActive = true;
-      m_status.sequence++;
+    if (ParseStatus(str, m_pImpl->m_status)) {
+      m_pImpl->m_bIsActive = true;
+      m_pImpl->m_status.sequence++;
     } else {
-      m_bIsActive = false;
+      m_pImpl->m_bIsActive = false;
     }
   });
   com.setContrlCallback([=](const uint8_t* pData, size_t szSizeInByte) {
-    m_strLastCmdRes = std::string{ 
+    m_pImpl->m_strLastCmdRes = std::string{ 
       reinterpret_cast<const char*>(pData), szSizeInByte };
   });  
 }
@@ -50,7 +74,8 @@ dilloxl::TelloDrone::TelloDrone(TelloCommunication& com)
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 dilloxl::TelloDrone::~TelloDrone()
 {
-
+  delete m_pImpl;
+  m_pImpl = nullptr;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -58,7 +83,8 @@ dilloxl::TelloDrone::~TelloDrone()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloDrone::takeoff()
 {
-  m_com.send("takeoff");
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send("takeoff");
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -66,7 +92,8 @@ void dilloxl::TelloDrone::takeoff()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloDrone::land()
 {
-  m_com.send("land");
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send("land", TelloCommunication::SendMode::kFORCE);
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -74,7 +101,8 @@ void dilloxl::TelloDrone::land()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloDrone::emergency()
 {
-  m_com.send("emergency");
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send("emergency", TelloCommunication::SendMode::kFORCE);
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -82,8 +110,9 @@ void dilloxl::TelloDrone::emergency()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloDrone::reset()
 {
-  ::memset(&m_status, 0, sizeof(m_status));
-  m_strLastCmdRes = "";
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  ::memset(&m_pImpl->m_status, 0, sizeof(m_pImpl->m_status));
+  m_pImpl->m_strLastCmdRes = "";
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -91,7 +120,8 @@ void dilloxl::TelloDrone::reset()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 bool dilloxl::TelloDrone::isActive() const
 {
-  return m_bIsActive;
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  return m_pImpl->m_bIsActive;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -99,7 +129,8 @@ bool dilloxl::TelloDrone::isActive() const
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 const dilloxl::TelloDrone::Status& dilloxl::TelloDrone::lastStatus() const
 {
-  return m_status;
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  return m_pImpl->m_status;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -107,7 +138,17 @@ const dilloxl::TelloDrone::Status& dilloxl::TelloDrone::lastStatus() const
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 const std::string& dilloxl::TelloDrone::lastCommandResult() const
 {
-  return m_strLastCmdRes;
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  return m_pImpl->m_strLastCmdRes;
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+dilloxl::TelloCommunication& dilloxl::TelloDrone::com()
+{
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  return m_pImpl->m_com;
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
