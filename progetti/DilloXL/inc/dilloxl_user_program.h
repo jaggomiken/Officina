@@ -7,15 +7,23 @@
 #define dilloxl_user_program_h
 
 #include "dilloxl_system.h"
+#include "dilloxl"
 
 namespace dilloxl {
   struct UserProgram {
-    explicit UserProgram(const std::string&);
+    static void Configure(int32_t argc, char* argv[]);
+    static UserProgram& GetCurrent();
+
+    UserProgram(const std::string&);
     UserProgram(const UserProgram&) = delete;
     UserProgram(UserProgram&&) noexcept;
     UserProgram& operator=(const UserProgram&) = delete;
     UserProgram& operator=(UserProgram&&) noexcept;
    ~UserProgram();
+
+    std::string name() const;
+    void setSource(const std::string&);
+    std::string source() const;
 
     void build();
     void run();

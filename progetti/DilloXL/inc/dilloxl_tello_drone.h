@@ -16,29 +16,29 @@ namespace dilloxl {
         union StatusAsArray {
         float values[21];
         struct StatusAsValues {
-            float mid;
-            float x;
-            float y;
-            float z;
-            float unused; // mpry gestito in modo diverso perché Vec3
-            float pitch;
-            float roll;
-            float yaw;
-            float speed_x;
-            float speed_y;
-            float speed_z;
-            float temperature_lo;
-            float temperature_hi;
-            float time_of_flight;
-            float height_from_floor;
-            float battery_level;
-            float barometer_cm;
-            float motor_time;
-            float acceleration_x;
-            float acceleration_y;
-            float acceleration_z;
+          float mid;
+          float x;
+          float y;
+          float z;
+          float unused; // mpry gestito in modo diverso perché Vec3
+          float pitch;
+          float roll;
+          float yaw;
+          float speed_x;
+          float speed_y;
+          float speed_z;
+          float temperature_lo;
+          float temperature_hi;
+          float time_of_flight;
+          float height_from_floor;
+          float battery_level;
+          float barometer_cm;
+          float motor_time;
+          float acceleration_x;
+          float acceleration_y;
+          float acceleration_z;
         } status;
-        } u;
+      } u;
     };
 
     static TelloDrone& Get();

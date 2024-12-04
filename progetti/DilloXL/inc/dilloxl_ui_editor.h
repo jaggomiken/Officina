@@ -18,6 +18,8 @@ namespace dilloxl {
     GuiEditor& operator=(GuiEditor&&) noexcept;
     virtual ~GuiEditor();
     virtual void draw();
+    void setSource(const std::string&);
+    std::string source() const;
   private:
     class Impl; Impl* m_pImpl;
   };

@@ -18,6 +18,7 @@ set(SRC
     src/dilloxl_ui_control.cpp 
     src/dilloxl_ui_editor.cpp 
     src/dilloxl_user_program.cpp
+    src/dilloxl_if.cpp
 )
 set(INC 
     inc/dilloxl_priv.h 
@@ -28,11 +29,16 @@ set(INC
     inc/dilloxl_ui_control.h 
     inc/dilloxl_ui_editor.h 
     inc/dilloxl_user_program.h
+    inc/dilloxl_if.h
+    inc/dilloxl
 )
 set(EXT ext/TextEditor.h ext/TextEditor.cpp)
 add_executable(dilloxl ${SRC} ${INC} ${EXT})
 target_include_directories(dilloxl PUBLIC inc ext)
 target_link_libraries(dilloxl PRIVATE ImGui-SFML::ImGui-SFML SFML::Audio SFML::Network)
 target_compile_options(dilloxl PRIVATE ${IMGUI_SFML_WARNINGS})
+set_target_properties(dilloxl PROPERTIES ENABLE_EXPORTS TRUE)
 include(GNUInstallDirs)
 install(TARGETS dilloxl)
+install(FILES inc/dilloxl
+    DESTINATION bin)

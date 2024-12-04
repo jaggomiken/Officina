@@ -195,15 +195,21 @@ void dilloxl::GuiControl::Impl::draw()
     ImGui::Separator();
     ImGui::Text("ERRORE: %s", drone.com().lastError().c_str());
     ImGui::Separator();
+    ImGui::TextUnformatted("IL TUO PROGRAMMA");
+    ImGui::Separator();
 
     bool bDis = false;
     if (0 != m_szThreadStarted) { ImGui::BeginDisabled(); bDis = true; }
-    if (ImGui::Button("Avvia Programma")) {
+    if (ImGui::Button("Controlla")) {
+      UserProgram::GetCurrent().build();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Esegui")) {
       if (m_threadTello.joinable()) { m_threadTello.join(); }
       m_threadTello = std::thread([=]() {
         m_szThreadStarted = 1;
         //////////////////////////////////////////////////////////////////
-        std::this_thread::sleep_for(std::chrono::seconds(20));
+        UserProgram::GetCurrent().run();
         //////////////////////////////////////////////////////////////////
         m_szThreadStarted = 0;
       });

@@ -8,6 +8,7 @@
 #include "dilloxl_ui_console.h"
 #include "dilloxl_ui_control.h"
 #include "dilloxl_ui_editor.h"
+#include "dilloxl_user_program.h"
 #include <imgui.h>
 #include <imgui-SFML.h>
 
@@ -43,11 +44,14 @@ int main(int argc, char* argv[])
 
   dilloxl::TelloCommunication tellocom;
   dilloxl::TelloDrone drone{ tellocom };
+  dilloxl::UserProgram::Configure(argc, argv);
+  dilloxl::UserProgram program{"Predefinito"};
 
   dilloxl::GuiControl ui_Control;
   dilloxl::GuiEditor ui_Editor;
-  bool bShowExitDialog = false, bQuitApp = false;;
+  ui_Editor.setSource(program.source());
 
+  bool bShowExitDialog = false, bQuitApp = false;;
   sf::Clock deltaClock;
   while (window.isOpen()) {
     while (const auto event = window.pollEvent()) {
@@ -72,7 +76,7 @@ int main(int argc, char* argv[])
         , ImGuiWindowFlags_AlwaysAutoResize
         | ImGuiWindowFlags_NoResize)) {
       ImGui::TextUnformatted("Sei sicuro di voler chiudere ?");
-      if (ImGui::Button(     "OK")) { 
+      if (ImGui::Button("OK")) { 
         ImGui::CloseCurrentPopup(); 
         bQuitApp = true;
         bShowExitDialog = false;
