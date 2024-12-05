@@ -62,6 +62,7 @@ public:
   std::thread m_threadTello;
   std::atomic_size_t m_szThreadStarted;
   size_t m_szNStatusPktsLast;
+  bool m_bShowModal;
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -116,8 +117,9 @@ void dilloxl::GuiControl::draw()
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 dilloxl::GuiControl::Impl::Impl()
-  : m_szThreadStarted   { 0 }
-  , m_szNStatusPktsLast { 0 }
+  : m_szThreadStarted   {     0 }
+  , m_szNStatusPktsLast {     0 }
+  , m_bShowModal        { false }
 {
 }
 
@@ -158,6 +160,7 @@ void dilloxl::GuiControl::Impl::draw()
   gvPropDescs[15].checkchangedandwrite(st.u.status.acceleration_z);
   gvPropDescs[16].checkchangedandwrite(st.sequence);
 
+  bool bExecProgram = false;
   if (ImGui::Begin("Comandi & Stato")) {
     if (ImGui::Button("Connetti")) { drone.com().tryLink(); }
     ImGui::SameLine();
@@ -204,16 +207,9 @@ void dilloxl::GuiControl::Impl::draw()
       UserProgram::GetCurrent().build();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Esegui")) {
-      if (m_threadTello.joinable()) { m_threadTello.join(); }
-      m_threadTello = std::thread([=]() {
-        m_szThreadStarted = 1;
-        //////////////////////////////////////////////////////////////////
-        UserProgram::GetCurrent().run();
-        //////////////////////////////////////////////////////////////////
-        m_szThreadStarted = 0;
-      });
-    }
+    if (1 == m_szThreadStarted) { ImGui::BeginDisabled(); }
+    if (ImGui::Button("Esegui")) { m_bShowModal = true; }
+    if (1 == m_szThreadStarted) { ImGui::EndDisabled(); }
     if (bDis) { ImGui::EndDisabled(); }
     ImGui::SameLine();
     
@@ -225,6 +221,10 @@ void dilloxl::GuiControl::Impl::draw()
     }
     if (bTelloDis) { ImGui::EndDisabled(); }
     ImGui::PopStyleColor();
+    ImGui::SameLine();
+    if (ImGui::Button("Pulisci")) { 
+      std::fprintf(stderr, "%s", DILLOXL_TERM_CLRSCR); 
+    }
     ImGui::Separator();
     ImGui::Text("STATO PROGRAMMA: ");
     ImGui::SameLine();
@@ -251,5 +251,29 @@ void dilloxl::GuiControl::Impl::draw()
       }
     }
     ImGui::End();
+  }
+
+  const char* pTitleExitDialog = "Domanda Importante##1";
+  if (m_bShowModal) { ImGui::OpenPopup(pTitleExitDialog); }
+  dilloxl::ShowModalDialog(pTitleExitDialog
+    , "Sei sicuro di voler eseguire il tuo programma ?", &m_bShowModal
+    , [&]() {
+    m_bShowModal = false;
+    bExecProgram = true;
+  }, [&]() {
+    m_bShowModal = false;
+    bExecProgram = false;
+  });
+
+  if (bExecProgram) {
+    bExecProgram = false;
+    if (m_threadTello.joinable()) { m_threadTello.join(); }
+    m_threadTello = std::thread([=]() {
+      m_szThreadStarted = 1;
+      //////////////////////////////////////////////////////////////////
+      UserProgram::GetCurrent().run();
+      //////////////////////////////////////////////////////////////////
+      m_szThreadStarted = 0;
+    });
   }
 }

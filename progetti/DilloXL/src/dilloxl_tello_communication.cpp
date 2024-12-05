@@ -4,14 +4,35 @@
  * A project for students...
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #include "dilloxl_tello_communication.h"
+#include "dilloxl_tello_drone.h"
 #include <queue>
+#include <thread>
+#include <mutex>
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * MACROS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-#define DILLOXL_TELLOCOMM_DEBUG                                            0
+#define DILLOXL_TELLOCOMM_DUMP_DEBUG                                       0
+#define DILLOXL_TELLOCOMM_QUEUE_DEBUG                                      1
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * MACROS
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #define DILLOXL_TELLOCOMM_LINK_DOWN_TIMEOUT_S                              2
-#define DILLOXL_TELLOCOMM_WAITFORRESP_TIMEOUT_S                            2
+#define DILLOXL_TELLOCOMM_WAITFORRESP_TIMEOUT_S                            5
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * DECLARATIONS
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * FUNCTIONS
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void DroneWaitAndSend(const std::function<void()>& fn) {
+  if (dilloxl::TelloDrone::Get().com().waitforready(2000)) {
+    if (fn) { fn(); } // send is thread-safe now
+  }
+}
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * DECLARATION
@@ -28,6 +49,8 @@ public:
   , m_szNStatusPacketsLast{                  0 }
   , m_bLinkAlive          {              false }
   , m_bWaitForResponse    {              false }
+  , m_bControlPktSent     {              false }
+  , m_uSeqToWaitFor       {                  0 }
   {}
 
  ~Impl() {
@@ -50,10 +73,14 @@ public:
   StatusCallback m_statuscb;
   VideoSCallback m_videoscb;
   bool m_bLinkAlive;
-  Timer m_timerKeepAlive;
   bool m_bWaitForResponse;
+  bool m_bControlPktSent;
+  std::recursive_mutex m_mtxW4RCPS;
+  Timer m_timerKeepAlive;
   Timer m_timerW4R;
   std::queue<std::string> m_qMsg;
+  uint32_t m_uSeqToWaitFor;
+  std::recursive_mutex m_mtxQ;
 
   void m_OnStatusUnconnected();
   void m_OnStatusConnecting(); 
@@ -106,9 +133,10 @@ dilloxl::TelloCommunication::~TelloCommunication()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-void dilloxl::TelloCommunication::tryLink()
+void dilloxl::TelloCommunication::reset()
 {
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxW4RCPS };
   m_pImpl->m_strLastErr = "Nessuno";
   m_pImpl->m_szNControlPacketsIn  =     0;
   m_pImpl->m_szNControlPacketsOt  =     0;
@@ -117,6 +145,28 @@ void dilloxl::TelloCommunication::tryLink()
   m_pImpl->m_szNStatusPacketsLast =     0;
   m_pImpl->m_bLinkAlive           = false;
   m_pImpl->m_bWaitForResponse     = false;
+  m_pImpl->m_bControlPktSent      = false;
+  m_pImpl->m_uSeqToWaitFor        =     0;
+  while (!m_pImpl->m_qMsg.empty()) { m_pImpl->m_qMsg.pop(); }
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloCommunication::tryLink()
+{
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxW4RCPS };
+  m_pImpl->m_strLastErr = "Nessuno";
+  m_pImpl->m_szNControlPacketsIn  =     0;
+  m_pImpl->m_szNControlPacketsOt  =     0;
+  m_pImpl->m_szNStatusPackets     =     0;
+  m_pImpl->m_szNVideoPackets      =     0;
+  m_pImpl->m_szNStatusPacketsLast =     0;
+  m_pImpl->m_bLinkAlive           = false;
+  m_pImpl->m_bWaitForResponse     = false;
+  m_pImpl->m_bControlPktSent      = false;
+  m_pImpl->m_uSeqToWaitFor        =     0;
   while (!m_pImpl->m_qMsg.empty()) { m_pImpl->m_qMsg.pop(); }
 
   m_pImpl->m_SockControl.unbind();
@@ -181,17 +231,41 @@ std::string dilloxl::TelloCommunication::lastStatus() const
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+bool dilloxl::TelloCommunication::waitforready(size_t timeout_ms)
+{
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  for (size_t k = 0;k < timeout_ms; ++k) {
+    { std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxW4RCPS };
+      if (m_pImpl->m_bControlPktSent && m_pImpl->m_bWaitForResponse) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      } else {
+        return true;
+      }}
+  }
+  std::fprintf(stderr, DILLOXL_TERM_GRYBLK "[COM]: TIMEOUT.\n" DILLOXL_TERM_RESETA);
+  return false; // timeout
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::send(const std::string& msg
   , SendMode mode)
 {
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
   if (SendMode::kFORCE == mode) {
-    std::fprintf(stderr, "\n[COM]: MESSAGGIO URGENTE \"%s\"...\n", msg.c_str());
+    std::fprintf(stderr
+      , DILLOXL_TERM_GRYBLK "[COM]: MESSAGGIO URGENTE \"%s\"...\n" DILLOXL_TERM_RESETA
+      , msg.c_str());
     m_pImpl->m_Send(msg);
   } else {
-    if (m_pImpl->m_bWaitForResponse) {
-      std::fprintf(stderr, "[COM]: Messaggio \"%s\" accodato.\n", msg.c_str());
+    std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxW4RCPS };
+    if (m_pImpl->m_bWaitForResponse && m_pImpl->m_bControlPktSent) {
+      std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxQ };
       m_pImpl->m_qMsg.push(msg);
+      std::fprintf(stderr
+        , DILLOXL_TERM_GRYBLK "[COM]: Messaggio \"%s\" accodato.\n" DILLOXL_TERM_RESETA
+        , msg.c_str());
     } else {
       m_pImpl->m_Send(msg);
     }
@@ -287,8 +361,8 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusUnconnected()
   // send activation command...
   std::string msg{ "command" };
   auto to = sf::IpAddress::resolve(kTELLO_IPv4);
-  if (m_SockControl.send(msg.c_str(), msg.size(), to.value(), kUDP_PORT_CONTROL)
-        != sf::Socket::Status::Done) 
+  if (m_SockControl.send(msg.c_str(), msg.size() + 1 // notice the +1 here
+    , to.value(), kUDP_PORT_CONTROL) != sf::Socket::Status::Done) 
   {
     m_strLastErr = "Invio messaggio attivazione fallito";
     m_st = Status::kERROR;
@@ -296,7 +370,9 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusUnconnected()
     m_strLastErr = "Nessuno";
     m_st = Status::kCONNECTING;
     m_szNControlPacketsOt++;
+    m_bControlPktSent  = true;
     m_bWaitForResponse = true;
+    m_uSeqToWaitFor++;
   }
 }
 
@@ -317,7 +393,9 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusConnecting()
     m_st = Status::kCONNECTED;
     m_szNControlPacketsIn++;
     m_bWaitForResponse = false;
-#if DILLOXL_TELLOCOMM_DEBUG == 1
+    m_bControlPktSent  = false;
+    m_uSeqToWaitFor    = 0;
+#if DILLOXL_TELLOCOMM_DUMP_DEBUG == 1
     dump_data("CTRL", btData, szInBytes);
 #endif    
     break;
@@ -343,7 +421,7 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusConnected()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()  
 {
-  static uint8_t btData[1024];
+  static uint8_t btData[8192];
   size_t szInBytes = 0;
 
   // check and dequeue queued messages
@@ -353,22 +431,28 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
   { auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
     auto ret = m_SockControl.receive(btData, sizeof(btData), szInBytes, from, u2p);
     switch (ret) {
-    case sf::Socket::Status::Done:
-  #if DILLOXL_TELLOCOMM_DEBUG == 1
+    case sf::Socket::Status::Done: {
+  #if DILLOXL_TELLOCOMM_DUMP_DEBUG == 1
         dump_data("CONTROL", btData, szInBytes);
   #endif
+      std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
       if (m_bWaitForResponse) {
         m_strLastErr = "Nessuno";
         btData[std::min(sizeof(btData) - 1, szInBytes)] = 0;
-        std::fprintf(stdout, "%s\n", btData);
-        std::fflush (stdout);
+#if DILLOXL_TELLOCOMM_QUEUE_DEBUG == 1
+      std::fprintf(stderr
+        , DILLOXL_TERM_GRYBLK "[COM]: RISPOSTA RICEVUTA PER SEQ=%u, RES=%s\n" DILLOXL_TERM_RESETA
+        , m_uSeqToWaitFor, reinterpret_cast<const char*>(btData));
+#endif        
       } else {
         m_strLastErr = "Pacchetto di controllo inatteso";
       }
       m_st = Status::kWORKING;
       m_szNControlPacketsIn++;
       m_bWaitForResponse = false;
+      m_bControlPktSent  = false;
       if (m_contrlcb) { m_contrlcb(btData, szInBytes); }
+    }
       break;
     case sf::Socket::Status::NotReady:
       break;
@@ -387,7 +471,7 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
       m_strLastErr = "Nessuno";
       m_st = Status::kWORKING;
       m_szNStatusPackets++;
-#if DILLOXL_TELLOCOMM_DEBUG == 1
+#if DILLOXL_TELLOCOMM_DUMP_DEBUG == 1
       dump_data("STATUS", btData, szInBytes);
 #endif
       if (m_statuscb) { m_statuscb(btData, szInBytes); }
@@ -439,15 +523,36 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
   m_szNStatusPacketsLast = m_szNStatusPackets;
 
   // check anomaly on waiting for response
-  if (m_bWaitForResponse) {
+  if (m_bWaitForResponse && m_bControlPktSent) {
     if (m_timerW4R.elapsed().count()
           >= DILLOXL_TELLOCOMM_WAITFORRESP_TIMEOUT_S) {
       m_strLastErr = "Tempo massimo risposta superato";
+      std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
       m_bWaitForResponse = false;
+      m_bControlPktSent  = false;
       m_timerW4R = {}; // reset timer
     }
   } else {
     m_timerW4R = {}; // reset timer
+  }
+
+
+  // DEBUG-----
+  static bool bPre_W4S, bPre_CPS;
+  static uint32_t uPre_STW4 = 0;
+  {
+    std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
+    if (( bPre_CPS !=  m_bControlPktSent) ||
+        ( bPre_W4S != m_bWaitForResponse) ||
+        (uPre_STW4 != m_uSeqToWaitFor)) {
+      std::fprintf(stderr, DILLOXL_TERM_GRYBLK "[COM]: W4R=%3s CPS=%3s SEQ=%8u\n" DILLOXL_TERM_RESETA
+        , m_bWaitForResponse ? "YES" : "NO"
+        , m_bControlPktSent  ? "YES" : "NO"
+        , m_uSeqToWaitFor);
+    }
+    bPre_CPS  = m_bControlPktSent;
+    bPre_W4S  = m_bWaitForResponse;
+    uPre_STW4 = m_uSeqToWaitFor;
   }
 }
 
@@ -480,6 +585,7 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusUndefined()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::Impl::m_DequeueAndSend()
 {
+  std::lock_guard<std::recursive_mutex> g{ m_mtxQ };
   if (!m_qMsg.empty()) {
     auto msg = m_qMsg.front(); m_qMsg.pop();
     m_Send(msg);
@@ -493,19 +599,27 @@ void dilloxl::TelloCommunication::Impl::m_Send(const std::string& msg)
 {
   auto to = sf::IpAddress::resolve(kTELLO_IPv4);
   if (Status::kWORKING == m_st) {
-    if (m_SockControl.send(msg.c_str(), msg.size()
+    if (m_SockControl.send(msg.c_str(), msg.size() + 1 // notice the +1 here
       , to.value(), kUDP_PORT_CONTROL)  != sf::Socket::Status::Done) 
     {
+      std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
       m_strLastErr = "Invio messaggio utente fallito";
       m_st = Status::kERROR;
       m_bWaitForResponse = false;
+      m_bControlPktSent  = false;
+      m_uSeqToWaitFor    = 0;
     } else {
-      std::fprintf(stdout
-        , "[COM]: Messaggio \"%s\" inviato. Risposta: ", msg.c_str());
-      std::fflush (stdout);
+      std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
       m_strLastErr = "Attesa risposta...";
       m_bWaitForResponse = true;
+      m_bControlPktSent  = true;
+      m_uSeqToWaitFor++;
       m_szNControlPacketsOt++;
+#if DILLOXL_TELLOCOMM_QUEUE_DEBUG == 1
+      std::fprintf(stderr
+        , DILLOXL_TERM_GRYBLK "[COM]: Messaggio \"%s\" inviato (Seq=%u). Attesa risposta...\n" DILLOXL_TERM_RESETA
+        , msg.c_str(), m_uSeqToWaitFor);
+#endif        
     }
   }
 }

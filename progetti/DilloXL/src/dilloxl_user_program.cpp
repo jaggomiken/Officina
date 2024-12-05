@@ -75,10 +75,11 @@ dilloxl::UserProgram::UserProgram(const std::string& name)
     "// La data di oggi: AAAA-MM-GG\n"
     "//\n"
     "programma_inizio\n"
-	  "\tcrea_oggetto_da_astrazione(Drone) dando_nome(plinio(TELLO))\n"
+	  "\tcrea_oggetto_da_astrazione(Drone) dando_nome(plinio)\n"
     "\tcrea_oggetto_da_astrazione(numero_intero_positivo) dando_nome(passi)\n"
+    "\tpassi = 0;\n"
 	  "\tmessaggia_oggetto( plinio, decolla, (0) )\n"
-    "\tfai_questo_finche_e_vero_che(passi < 10)\n"
+    "\tfai_questo_finche_e_vero_che(passi < 3)\n"
     "\t\tmessaggia_oggetto( plinio, vai_avanti_cm, (100))\n"
     "\t\tpassi = passi + 1;\n"
     "\tfine_questo\n"
@@ -188,7 +189,7 @@ void dilloxl::UserProgram::Impl::build()
     ::fprintf(fp, "%s", m_strSource.c_str());
     ::fclose (fp);
   } else {
-    std::fprintf(stderr, "[UP]: Impossibile salvare il file.\n");
+    std::fprintf(stderr, "[PRO]: Impossibile salvare il file.\n");
     return;
   }
 
@@ -198,7 +199,7 @@ void dilloxl::UserProgram::Impl::build()
     "-shared " DILLOXL_IF_SOURCEFILENAME " "
     "-o " DILLOXL_IF_DLLNAME " "
     "-I./bin -I../include" " "
-    "-L./bin -L../lib");
+    "-L./bin -L../lib libdilloxl.dll.a");
   memcpy(pcmd, p, std::min(sizeof(pcmd), ::strlen(p)));
   STARTUPINFOA si;
   PROCESS_INFORMATION pi;
@@ -218,14 +219,14 @@ void dilloxl::UserProgram::Impl::build()
   );
   if (0 == res) {
     std::fprintf(stderr
-      , "[UP]: Impossibile lanciare il compilatore (%d)\n"
+      , "[PRO]: Impossibile lanciare il compilatore (%d)\n"
       , ::GetLastError());
   } else {
-    std::fprintf(stderr, "[UP]: Controllo programma...\n");
+    std::fprintf(stderr, "[PRO]: Controllo programma...\n");
     WaitForSingleObject( pi.hProcess, INFINITE );
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );    
-    std::fprintf(stderr, "[UP]: Controllato.\n");
+    std::fprintf(stderr, "[PRO]: Controllato.\n");
   }
 #else
 #endif
@@ -240,22 +241,22 @@ void dilloxl::UserProgram::Impl::run()
   auto hm = ::LoadLibraryA(DILLOXL_IF_DLLNAME);
   if (NULL == hm) {
     std::fprintf(stderr
-      , "[UP]: Errore: LoadLibrary, %d\n", ::GetLastError());
+      , "[PRO]: Errore: LoadLibrary, %d\n", ::GetLastError());
   } else {
     auto fn = GetProcAddress(hm, DILLOXL_IF_SYMBOL);
     if (NULL == fn) {
       std::fprintf(stderr
-        , "[UP]: Errore: GetProcAddress(%s), %d\n"
+        , "[PRO]: Errore: GetProcAddress(%s), %d\n"
         , DILLOXL_IF_SYMBOL, ::GetLastError());
     }
     else {
       SetupUserProgramContext(&m_upc, this);
       std::fprintf(stderr
-        , "[UP]: Sto per lanciare il programma utente...\n");
+        , "[PRO]: Sto per lanciare il programma utente...\n");
       typedef void (*UP)(UserProgramContext*);
       UP fn_up = UP(fn); fn_up(&m_upc);
       std::fprintf(stderr
-        , "[UP]: Fatto. Che si vede?\n");
+        , "[PRO]: Fatto. Che si vede?\n");
     }
     ::FreeLibrary(hm);
   }

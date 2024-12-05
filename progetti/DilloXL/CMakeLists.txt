@@ -37,8 +37,9 @@ add_executable(dilloxl ${SRC} ${INC} ${EXT})
 target_include_directories(dilloxl PUBLIC inc ext)
 target_link_libraries(dilloxl PRIVATE ImGui-SFML::ImGui-SFML SFML::Audio SFML::Network)
 target_compile_options(dilloxl PRIVATE ${IMGUI_SFML_WARNINGS})
-set_target_properties(dilloxl PROPERTIES ENABLE_EXPORTS TRUE)
+target_link_options(dilloxl PUBLIC "-Wl,--export-all-symbols")
 include(GNUInstallDirs)
-install(TARGETS dilloxl)
-install(FILES inc/dilloxl
+install(TARGETS dilloxl
+    RUNTIME DESTINATION bin)
+install(FILES inc/dilloxl ${CMAKE_BINARY_DIR}/libdilloxl.dll.a
     DESTINATION bin)

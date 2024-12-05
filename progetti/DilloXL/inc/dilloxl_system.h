@@ -17,6 +17,15 @@
     }\
   }
 
+#define DILLOXL_TERM_RESETA "\x1b[0m"
+#define DILLOXL_TERM_CLRSCR "\x1b[2J\x1b[3J\x1b[H"
+#define DILLOXL_TERM_BLKWHT "\x1b[30;40m"
+#define DILLOXL_TERM_REDWHT "\x1b[31;40m"
+#define DILLOXL_TERM_GRNWHT "\x1b[32;40m"
+#define DILLOXL_TERM_BLUWHT "\x1b[34;40m"
+#define DILLOXL_TERM_CYAWHT "\x1b[36;40m"
+#define DILLOXL_TERM_GRYBLK "\x1b[40;37m"
+
 namespace dilloxl {
   std::vector<std::string> split(const std::string& s, std::string delimiter);
   std::string trim(const std::string&);
@@ -29,6 +38,14 @@ namespace dilloxl {
     std::chrono::duration<int64_t> elapsed();
     std::chrono::time_point<std::chrono::system_clock> t0;    
   };
+}
+
+namespace dilloxl {
+  bool ShowModalDialog(const std::string& title
+    , const std::string& text
+    , bool* bshow
+    , const std::function<void()>& onOK
+    , const std::function<void()>& onCancel = {});
 }
 
 #endif // dilloxl_system_h

@@ -14,7 +14,7 @@
 
 int main(int argc, char* argv[]) 
 {
-  sf::RenderWindow window(sf::VideoMode({ 1920, 1080 })
+  sf::RenderWindow window(sf::VideoMode({ 1920, 1280 })
     , "DILLO XL Versione 1.0 - By Prof. Michele Iacobellis");
 
   window.setFramerateLimit(60);
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
   dilloxl::GuiEditor ui_Editor;
   ui_Editor.setSource(program.source());
 
-  bool bShowExitDialog = false, bQuitApp = false;;
+  bool bShowExitDialog = false, bQuitApp = false;
   sf::Clock deltaClock;
   while (window.isOpen()) {
     while (const auto event = window.pollEvent()) {
@@ -63,33 +63,21 @@ int main(int argc, char* argv[])
 
     ImGui::SFML::Update(window, deltaClock.restart());
     ImGui::SFML::SetCurrentWindow(window);
-    ImGui::DockSpaceOverViewport(0, 0, ImGuiDockNodeFlags_PassthruCentralNode);
+    ImGui::DockSpaceOverViewport(0, 0
+      , ImGuiDockNodeFlags_PassthruCentralNode);
     tellocom.execute();
 
-    if (bShowExitDialog) {
-      ImGui::OpenPopup("Domanda Importante");
-    }
-
-    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-    if (ImGui::BeginPopupModal("Domanda Importante", &bShowExitDialog
-        , ImGuiWindowFlags_AlwaysAutoResize
-        | ImGuiWindowFlags_NoResize)) {
-      ImGui::TextUnformatted("Sei sicuro di voler chiudere ?");
-      if (ImGui::Button("OK")) { 
-        ImGui::CloseCurrentPopup(); 
-        bQuitApp = true;
-        bShowExitDialog = false;
-      }
-      ImGui::SameLine();
-      if (ImGui::Button("Annulla")) { 
-        ImGui::CloseCurrentPopup(); 
-        bQuitApp = false; 
-        bShowExitDialog = false;
-      }
-      ImGui::EndPopup();
-    }
-
+    const char* pTitleExitDialog = "Domanda Importante";
+    if (bShowExitDialog) { ImGui::OpenPopup(pTitleExitDialog); }
+    dilloxl::ShowModalDialog(pTitleExitDialog
+      , "Sei sicuro di voler chiudere ?", &bShowExitDialog
+      , [&]() {
+      bShowExitDialog = false;
+      bQuitApp = true;
+    }, [&]() {
+      bShowExitDialog = false;
+      bQuitApp = false;
+    });
     if (bQuitApp) { window.close(); }
 
      ui_Editor.draw();

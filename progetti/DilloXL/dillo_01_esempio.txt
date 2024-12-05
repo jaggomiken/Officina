@@ -1,0 +1,29 @@
+#include "dilloxl"
+
+//
+// Il mio primo programma che fa volare il drone Tello.
+// Il tuo nome e cognome: <scrivi qui>
+// La data di oggi: AAAA-MM-GG
+//
+programma_inizio
+	crea_oggetto_da_astrazione(Drone) dando_nome(plinio)
+	crea_oggetto_da_astrazione(numero_intero_positivo) dando_nome(passi)
+	passi = 0;
+	messaggia_oggetto( plinio, decolla, (0) )
+	fai_questo_finche_e_vero_che(passi < 3)
+		messaggia_oggetto( plinio, vai_avanti_cm, (50))
+		passi = passi + 1;
+	fine_questo
+	passi = 0;
+	fai_questo_finche_e_vero_che(passi < 3)
+		messaggia_oggetto( plinio, vai_indietro_cm, (50))
+		passi = passi + 1;
+	fine_questo
+	messaggia_oggetto( plinio, ruota_senso_orario_gradi, (90) )
+	messaggia_oggetto( plinio, ruota_senso_antiorario_gradi, (90) )
+	messaggia_oggetto( plinio, vai_a_sinistra_cm, (50) )
+	messaggia_oggetto( plinio, vai_a_destra_cm, (50) )
+	messaggia_oggetto( plinio, vai_su_cm, (50) )
+	messaggia_oggetto( plinio, vai_giu_cm, (50) )
+	messaggia_oggetto( plinio, atterra, (0) )
+programma_fine

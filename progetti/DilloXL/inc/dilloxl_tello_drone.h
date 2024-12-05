@@ -50,10 +50,22 @@ namespace dilloxl {
     TelloDrone& operator=(TelloDrone&&) = delete;
    ~TelloDrone();
 
+    // commands with priority (FORCE)
     void takeoff();
     void land();
     void emergency();
     void reset();
+
+    // commands without priority (ENQUEUE)
+    void stop();
+    void move_left(float);
+    void move_right(float);
+    void move_up(float);
+    void move_down(float);
+    void rotate_cw(float);
+    void rotate_cc(float);
+    void forward(float);
+    void backward(float);
 
     bool isActive() const;
     const Status& lastStatus() const;
@@ -64,5 +76,7 @@ namespace dilloxl {
     class Impl; Impl* m_pImpl;
   };
 }
+
+void DroneWaitAndSend(const std::function<void()>&);
 
 #endif // dilloxl_tello_drone_h

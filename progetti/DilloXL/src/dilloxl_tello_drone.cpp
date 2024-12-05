@@ -26,7 +26,7 @@ public:
   }
 
  ~Impl() {
-
+    // nothing to do for now
   }
 
   TelloCommunication& m_com;
@@ -111,8 +111,98 @@ void dilloxl::TelloDrone::emergency()
 void dilloxl::TelloDrone::reset()
 {
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.reset();
   ::memset(&m_pImpl->m_status, 0, sizeof(m_pImpl->m_status));
   m_pImpl->m_strLastCmdRes = "";
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::stop()
+{
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send("stop");
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::move_left(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "left %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::move_right(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "right %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::move_up(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "up %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::move_down(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "down %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::rotate_cw(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "cw %.3f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::rotate_cc(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "ccw %.3f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::forward(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "forward %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::backward(float value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "back %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -121,7 +211,7 @@ void dilloxl::TelloDrone::reset()
 bool dilloxl::TelloDrone::isActive() const
 {
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
-  return m_pImpl->m_bIsActive;
+  return m_pImpl->m_bIsActive && m_pImpl->m_com.isLinkAlive();
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

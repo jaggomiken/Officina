@@ -25,14 +25,6 @@
 #endif
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
- * MACROS
- * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-#define DILLOXLHANG(c, m)\
-  do { if (c) { std::fprintf(stderr, "%s", m); for(;;) {    \
-    std::this_thread::sleep_for(std::chrono::seconds(1)); } \
-  }} while(0)
-
-/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * MACROS FOR USER PROGRAM
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #define dilloxl_do(what,arg) pctx->what arg
@@ -48,29 +40,29 @@
 #define crea_oggetto_da_astrazione(tipo) tipo
 #define dando_nome(nome) nome;
 #define messaggia_oggetto(nome,msg,arg) \
-  dilloxlprint("METTO IN CODA IL MESSAGGIO " #msg " A " #nome "\n"); \
-  nome.msg arg;
+  nome.msg arg;\
+  dilloxlprint("dico a " #nome ": " #msg #arg "\n");
 #define fine_questo }
 #define per_sempre_fai_questo \
-  dilloxlprint("STO PER FARE PER SEMPRE QUELLO CHE SCRIVI DOPO:\n"); \
+  dilloxlprint("per_sempre_fai_questo:\n"); \
   for(;;){
 #define fai_questo_per_volte(a) \
-  dilloxlprint("STO PER FARE " #a " VOLTE QUELLO CHE SCRIVI DOPO:\n"); \
+  dilloxlprint("fai_questo_per_volte " #a ":\n"); \
   for (size_t passo_corrente = 0; passo_corrente < a; ++passo_corrente) {
 #define fai_questo_finche_e_vero_che(a) \
-  dilloxlprint("STO PER FARE FINCHE' E' VERO CHE " #a " QUELLO CHE SCRIVI DOPO:\n"); \
+  dilloxlprint("fai_questo_finche_e_vero_che " #a ":\n"); \
   while (a) {
 #define fai_questo \
-  dilloxlprint("STO PER FARE QUELLO CHE SCRIVI DOPO:\n"); \
+  dilloxlprint("fai_questo:\n"); \
   do {
 #define e_rifallo_finche_e_vero_che(a) \
-  dilloxlprint("E LO RIFACCIO SE E' VERO CHE " #a "...\n"); \
+  dilloxlprint("e_rifallo_finche_e_vero_che " #a " ...\n"); \
   } while (a);
 #define se_e_vero_che(a)      if (a)
 #define allora_fai_questo     {
 #define altrimenti_fai_questo } else {
 #define fai_dormire_il_processo_per_millisecondi(x) \
-  dilloxlprint("IL PROCESSO DORME PER %u ms...\n",x); \
+  dilloxlprint("fai_dormire_il_processo_per_millisecondi %u ...\n",x); \
   std::this_thread::sleep_for(std::chrono::milliseconds(x));
 #define chiedi_informazione_a(a) a.lastStatus().u.status
 #define chiedi_a(a,m,c) a.m c;
@@ -94,6 +86,7 @@ struct UserProgramContext {
   void (*drone_backward)(float);
   void (*drone_takeoff)(float);
   void (*drone_land)(float);
+  void (*drone_stop)(float);
   void* pOpaque;
 };
 
@@ -101,18 +94,19 @@ struct UserProgramContext {
  * STRUCTS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 struct Drone {
-  explicit Drone(UserProgramContext* p) : m_pctx{ p } {}
-  void            vai_a_sinistra_cm(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_move_left(v); }
-  void              vai_a_destra_cm(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_move_right(v); }
-  void                    vai_su_cm(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_move_up(v); }
-  void                   vai_giu_cm(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_move_down(v); }
-  void     ruota_senso_orario_gradi(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_rotate_cw(v); }
-  void ruota_senso_antiorario_gradi(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_rotate_cc(v); }
-  void                vai_avanti_cm(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_forward(v); }
-  void              vai_indietro_cm(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_backward(v); }
-  void                      decolla(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_takeoff(v); }
-  void                      atterra(float v) { DILLOXLHANG(nullptr == m_pctx, "NULL"); m_pctx->drone_land(v); }
-private:
+  Drone();
+  void            vai_a_sinistra_cm(float v);
+  void              vai_a_destra_cm(float v);
+  void                    vai_su_cm(float v);
+  void                   vai_giu_cm(float v);
+  void     ruota_senso_orario_gradi(float v);
+  void ruota_senso_antiorario_gradi(float v);
+  void                vai_avanti_cm(float v);
+  void              vai_indietro_cm(float v);
+  void                      decolla(float v);
+  void                      atterra(float v);
+  void                         stop(float v);
+private:;
   UserProgramContext* m_pctx;
 };
 

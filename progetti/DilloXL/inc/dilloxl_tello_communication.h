@@ -42,6 +42,7 @@ namespace dilloxl {
     TelloCommunication& operator=(TelloCommunication&&) = delete;
    ~TelloCommunication();
 
+    void reset();
     void tryLink();
     void execute();
     const std::string& lastError() const;
@@ -51,8 +52,9 @@ namespace dilloxl {
     size_t nCtrlPktsOut() const;
     size_t  nStatusPkts() const;
     size_t   nVideoPkts() const;
-
-    void send(const std::string&, SendMode = SendMode::kNORMAL);
+                                                // false -> timeout, true -> ready
+    bool waitforready(size_t timeout_ms = 100); // thread-safe (must be invoked by another thread)
+    void send(const std::string&, SendMode = SendMode::kNORMAL); // thread-safe
     void setContrlCallback(const ContrlCallback&);
     void setStatusCallback(const StatusCallback&);
     void setVideosCallback(const VideoSCallback&);
