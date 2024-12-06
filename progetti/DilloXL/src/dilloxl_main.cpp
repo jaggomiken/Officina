@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
   dilloxl::UserProgram::Configure(argc, argv);
   dilloxl::UserProgram program{"Predefinito"};
 
+  dilloxl::GuiConsole ui_Console;
   dilloxl::GuiControl ui_Control;
   dilloxl::GuiEditor ui_Editor;
   ui_Editor.setSource(program.source());
@@ -82,6 +83,7 @@ int main(int argc, char* argv[])
 
      ui_Editor.draw();
     ui_Control.draw();
+    ui_Console.draw();
 
     window.clear();
     ImGui::SFML::Render(window);
