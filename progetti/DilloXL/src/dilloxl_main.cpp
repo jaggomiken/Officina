@@ -14,16 +14,22 @@
 
 int main(int argc, char* argv[]) 
 {
-  sf::RenderWindow window(sf::VideoMode({ 1920, 1280 })
-    , "DILLO XL Versione 1.0 - By Prof. Michele Iacobellis");
+  const char* pTitle = 
+    "DILLO XL Versione 1.0.1 - "
+    "By Prof. Michele Iacobellis (COLAMONICO-CHIARULLI)";
+  std::fprintf(stderr, "[DILLOXL]: %s\n", pTitle);
+  std::fprintf(stderr, "[DILLOXL]: argv[1] = valore scala display.\n");
 
+  sf::RenderWindow window(sf::VideoMode({ 1800, 1000 }), pTitle);
   window.setFramerateLimit(60);
   if (!ImGui::SFML::Init(window)) {
     std::fprintf(stderr, "[DILLOXL]: Errore di init.\n");
     return 1;
   }
 
-  const float scale = 2.0f;
+  const float scale = std::atof(nullptr == argv[1] ? "1.5" : argv[1]);
+  std::fprintf(stderr, "[DILLOXL]: Valore di scala: %f\n", scale);
+
   auto& style = ImGui::GetStyle();
   style.FrameRounding   = 3;
   style.ChildRounding   = 3;
@@ -45,7 +51,7 @@ int main(int argc, char* argv[])
   dilloxl::TelloCommunication tellocom;
   dilloxl::TelloDrone drone{ tellocom };
   dilloxl::UserProgram::Configure(argc, argv);
-  dilloxl::UserProgram program{"Predefinito"};
+  dilloxl::UserProgram program{"Studente"};
 
   dilloxl::GuiConsole ui_Console;
   dilloxl::GuiControl ui_Control;
@@ -56,10 +62,10 @@ int main(int argc, char* argv[])
   sf::Clock deltaClock;
   while (window.isOpen()) {
     while (const auto event = window.pollEvent()) {
-        ImGui::SFML::ProcessEvent(window, *event);
-        if (event->is<sf::Event::Closed>()) {
-          bShowExitDialog = true;
-        }
+      ImGui::SFML::ProcessEvent(window, *event);
+      if (event->is<sf::Event::Closed>()) {
+        bShowExitDialog = true;
+      }
     }
 
     ImGui::SFML::Update(window, deltaClock.restart());
@@ -72,13 +78,8 @@ int main(int argc, char* argv[])
     if (bShowExitDialog) { ImGui::OpenPopup(pTitleExitDialog); }
     dilloxl::ShowModalDialog(pTitleExitDialog
       , "Sei sicuro di voler chiudere ?", &bShowExitDialog
-      , [&]() {
-      bShowExitDialog = false;
-      bQuitApp = true;
-    }, [&]() {
-      bShowExitDialog = false;
-      bQuitApp = false;
-    });
+      , [&]() { bShowExitDialog = false; bQuitApp = true;  }
+      , [&]() { bShowExitDialog = false; bQuitApp = false; });
     if (bQuitApp) { window.close(); }
 
      ui_Editor.draw();

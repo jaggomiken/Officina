@@ -62,7 +62,8 @@ public:
   std::thread m_threadTello;
   std::atomic_size_t m_szThreadStarted;
   size_t m_szNStatusPktsLast;
-  bool m_bShowModal;
+  bool m_bShowRunProg;
+  bool m_bShowTakeoff;
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -119,7 +120,8 @@ void dilloxl::GuiControl::draw()
 dilloxl::GuiControl::Impl::Impl()
   : m_szThreadStarted   {     0 }
   , m_szNStatusPktsLast {     0 }
-  , m_bShowModal        { false }
+  , m_bShowRunProg      { false }
+  , m_bShowTakeoff      { false }
 {
 }
 
@@ -160,13 +162,15 @@ void dilloxl::GuiControl::Impl::draw()
   gvPropDescs[15].checkchangedandwrite(st.u.status.acceleration_z);
   gvPropDescs[16].checkchangedandwrite(st.sequence);
 
-  bool bExecProgram = false;
+  bool bExecProgram = false, bTakeoff = false;
   if (ImGui::Begin("Comandi & Stato")) {
     if (ImGui::Button("Connetti")) { drone.com().tryLink(); }
     ImGui::SameLine();
-    if (ImGui::Button( "Decolla")) { drone.takeoff(); }
+    if (!drone.com().isLinkAlive()) { ImGui::BeginDisabled(); }
+    if (ImGui::Button( "Decolla")) { m_bShowTakeoff = true; }
     ImGui::SameLine();
     if (ImGui::Button( "Atterra")) { drone.land(); }
+    if (!drone.com().isLinkAlive()) { ImGui::EndDisabled(); }
     ImGui::SameLine();
     if (ImGui::Button(   "Reset")) { drone.reset(); }
     ImGui::Separator();
@@ -193,8 +197,12 @@ void dilloxl::GuiControl::Impl::draw()
     ImGui::Text("        N. Pacchetti Video: %zu"
       , drone.com().nVideoPkts());
     ImGui::Separator();
-    ImGui::Text("%s", drone.com().isWaitingForResponse()
-      ? "In attesa di risposta..." : "Risposta ricevuta.");
+    if (drone.com().isLinkAlive()) {
+      ImGui::Text("%s", drone.com().isWaitingForResponse()
+        ? "In attesa di risposta..." : "Risposta ricevuta.");
+    } else {
+      ImGui::TextUnformatted("Non disponibile.");
+    }
     ImGui::Separator();
     ImGui::Text("ERRORE: %s", drone.com().lastError().c_str());
     ImGui::Separator();
@@ -208,7 +216,7 @@ void dilloxl::GuiControl::Impl::draw()
     }
     ImGui::SameLine();
     if (1 == m_szThreadStarted) { ImGui::BeginDisabled(); }
-    if (ImGui::Button("Esegui")) { m_bShowModal = true; }
+    if (ImGui::Button("Esegui")) { m_bShowRunProg = true; }
     if (1 == m_szThreadStarted) { ImGui::EndDisabled(); }
     if (bDis) { ImGui::EndDisabled(); }
     ImGui::SameLine();
@@ -253,18 +261,13 @@ void dilloxl::GuiControl::Impl::draw()
     ImGui::End();
   }
 
-  const char* pTitleExitDialog = "Domanda Importante##1";
-  if (m_bShowModal) { ImGui::OpenPopup(pTitleExitDialog); }
-  dilloxl::ShowModalDialog(pTitleExitDialog
-    , "Sei sicuro di voler eseguire il tuo programma ?", &m_bShowModal
-    , [&]() {
-    m_bShowModal = false;
-    bExecProgram = true;
-  }, [&]() {
-    m_bShowModal = false;
-    bExecProgram = false;
-  });
-
+  { const char* pTitleExitDialog = "Fai Attenzione##1";
+    if (m_bShowRunProg) { ImGui::OpenPopup(pTitleExitDialog); }
+    dilloxl::ShowModalDialog(pTitleExitDialog
+      , "Sei sicuro di voler eseguire il tuo programma ?", &m_bShowRunProg
+      , [&]() { m_bShowRunProg = false; bExecProgram = true;  }
+      , [&]() { m_bShowRunProg = false; bExecProgram = false; });
+  }
   if (bExecProgram) {
     bExecProgram = false;
     if (m_threadTello.joinable()) { m_threadTello.join(); }
@@ -276,4 +279,13 @@ void dilloxl::GuiControl::Impl::draw()
       m_szThreadStarted = 0;
     });
   }
+
+  { const char* pTitleExitDialog = "Fai Attenzione##2";
+    if (m_bShowTakeoff) { ImGui::OpenPopup(pTitleExitDialog); }
+    dilloxl::ShowModalDialog(pTitleExitDialog
+      , u8"Il drone può decollare in sicurezza ?", &m_bShowTakeoff
+      , [&]() { m_bShowTakeoff = false; bTakeoff = true;  }
+      , [&]() { m_bShowTakeoff = false; bTakeoff = false; });
+  }
+  if (bTakeoff) { drone.takeoff(); }
 }

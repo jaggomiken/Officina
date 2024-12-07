@@ -111,12 +111,12 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("CONTROLLO DIRETTO DEL DRONE");
 
     ImGui::Separator();
-    if (ImGui::Button("SX", { fWL, .0f })) { drone.move_left(float(m_iSxCm)); }
+    ImGui::TextUnformatted("cm");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
     ImGui::SliderInt("##1", &m_iSxCm, 50, 400);
     ImGui::SameLine();
-    ImGui::TextUnformatted("cm |");
+    if (ImGui::Button("SX", { fWL, .0f })) { drone.move_left(float(m_iSxCm)); }
     ImGui::SameLine();
     if (ImGui::Button("DX", { fWL, .0f })) { drone.move_right(float(m_iDxCm)); }
     ImGui::SameLine();
@@ -126,12 +126,12 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("cm");
 
     ImGui::Separator();
-    if (ImGui::Button("Su",{ fWL, .0f })) { drone.move_up(float(m_iUpCm)); }
+    ImGui::TextUnformatted("cm");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
     ImGui::SliderInt("##3", &m_iUpCm, 50, 400);
     ImGui::SameLine(); 
-    ImGui::TextUnformatted("cm |");
+    if (ImGui::Button(   "Su",{ fWL, .0f })) { drone.move_up(float(m_iUpCm)); }
     ImGui::SameLine();
     if (ImGui::Button(u8"Giù",{ fWL, .0f })) { drone.move_down(float(m_iDnCm)); }
     ImGui::SameLine();
@@ -141,12 +141,12 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("cm");
 
     ImGui::Separator();
-    if (ImGui::Button("Avanti",{ fWL, .0f })) { drone.forward(float(m_iFwCm)); }
-    ImGui::SameLine();
+    ImGui::TextUnformatted("cm");
+    ImGui::SameLine(); 
     ImGui::SetNextItemWidth(fWS);
     ImGui::SliderInt("##5", &m_iFwCm, 50, 400);
-    ImGui::SameLine(); 
-    ImGui::TextUnformatted("cm |");
+    ImGui::SameLine();
+    if (ImGui::Button("Avanti",{ fWL, .0f })) { drone.forward(float(m_iFwCm)); }
     ImGui::SameLine();
     if (ImGui::Button("Indietro",{ fWL, .0f })) { drone.backward(float(m_iBwCm)); }
     ImGui::SameLine();
@@ -156,24 +156,26 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("cm");
 
     ImGui::Separator();
-    if (ImGui::Button("Rot CW",{ fWL, .0f })) { drone.rotate_cw(m_fCwDeg); }
+    ImGui::TextUnformatted(u8" °");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
     ImGui::SliderFloat("##7", &m_fCwDeg, .0f, 359.0f);
     ImGui::SameLine(); 
-    ImGui::TextUnformatted(u8" ° |");
+    if (ImGui::Button("Rot CW",{ fWL, .0f })) { drone.rotate_cw(m_fCwDeg); }
     ImGui::SameLine();
     if (ImGui::Button("Rot CC",{ fWL, .0f })) { drone.rotate_cc(m_fCcDeg); }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
     ImGui::SliderFloat("##8", &m_fCcDeg, .0f, 359.0f);
     ImGui::SameLine();
-    ImGui::TextUnformatted(u8" °");
+    ImGui::TextUnformatted(u8"° ");
 
     ImGui::Separator();
+    ImGui::TextUnformatted(">>");
+    ImGui::SameLine();
     if (ImGui::Button("Stop", { fWL, .0f })) { drone.stop(); }    
     ImGui::SameLine();
-    ImGui::TextUnformatted("<< premi per fermare il drone...");
+    ImGui::TextUnformatted("<< Premi, per fermare il drone...");
   }
   ImGui::End();
 }
