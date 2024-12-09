@@ -66,6 +66,7 @@ namespace dilloxl {
     void rotate_cc(float);
     void forward(float);
     void backward(float);
+    void video(bool);
 
     bool isActive() const;
     const Status& lastStatus() const;

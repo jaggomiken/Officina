@@ -9,10 +9,10 @@
 #include "dilloxl_tello_drone.h"
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
- * MACROS
+ * MACROS (WAITFOR_MS must be 100)
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #define DILLOXL_IF_DEBUG                                                   0
-#define DILLOXL_IF_WAITFOR_MS                                              0
+#define DILLOXL_IF_WAITFOR_MS                                            100
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * NOTICE: These functions are invoked by another thread different from the
@@ -20,14 +20,15 @@
  * specialized in running the user program. The DILLOXL_IF_WAITFOR_MS is
  * used for fine tuning, but the most important thing is that the COM is
  * able to wait for a response from the drone. So DILLOXL_IF_WAITFOR_MS is 0
- * for that reason.
+ * for that reason. The best value for now is 100ms.
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * LOCALS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 static void dilloxl_print_message(const char* msg) {
-  std::fprintf(stderr, DILLOXL_TERM_GRNWHT "[PRO]: %s" DILLOXL_TERM_RESETA, msg);
+  std::fprintf(stderr
+    , DILLOXL_TERM_GRNBLK "[PRO]: %s" DILLOXL_TERM_RESETA "\n", msg);
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -190,6 +191,21 @@ static void dilloxl_drone_backward(float value) {
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * LOCALS
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+static void dilloxl_drone_video(bool value) {
+  DroneWaitAndSend([=]() {
+    std::this_thread::sleep_for(
+      std::chrono::milliseconds(DILLOXL_IF_WAITFOR_MS));
+    dilloxl::TelloDrone::Get().video(value);
+#if DILLOXL_IF_DEBUG == 1      
+    std::fprintf(stderr, "[PRO]: VIDEO %s: INSERITO\n"
+      , value ? "ABILITATO" : "DISABILITATO");
+#endif  
+  });
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 static UserProgramContext* gpUPC = nullptr;
@@ -217,6 +233,7 @@ void dilloxl::SetupUserProgramContext(UserProgramContext* pctx, void* puser)
   pctx->drone_forward    = &dilloxl_drone_forward;
   pctx->drone_backward   = &dilloxl_drone_backward;
   pctx->drone_stop       = &dilloxl_drone_stop;
+  pctx->drone_video      = &dilloxl_drone_video;
   gpUPC = pctx;
 }
 
@@ -245,3 +262,4 @@ void Drone::             vai_indietro_cm(float v) { DILLOXL_CAPTURE_CPU(nullptr 
 void Drone::                     decolla(float v) { DILLOXL_CAPTURE_CPU(nullptr == m_pctx, "NULL"); m_pctx->drone_takeoff(v); }
 void Drone::                     atterra(float v) { DILLOXL_CAPTURE_CPU(nullptr == m_pctx, "NULL"); m_pctx->drone_land(v); }
 void Drone::                        stop(float v) { DILLOXL_CAPTURE_CPU(nullptr == m_pctx, "NULL"); m_pctx->drone_stop(v); }
+void Drone::                       video( bool v) { DILLOXL_CAPTURE_CPU(nullptr == m_pctx, "NULL"); m_pctx->drone_video(v); }

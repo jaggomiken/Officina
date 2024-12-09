@@ -19,7 +19,8 @@
  * MACROS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #define DILLOXL_TELLOCOMM_LINK_DOWN_TIMEOUT_S                              2
-#define DILLOXL_TELLOCOMM_WAITFORRESP_TIMEOUT_S                            5
+#define DILLOXL_TELLOCOMM_WAITFORRESP_TIMEOUT_S                           15
+#define DILLOXL_TELLOCOMM_RES_PRINT                                        1
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * DECLARATIONS
@@ -27,9 +28,11 @@
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * FUNCTIONS
+ * Pay attention, the "land" command may require many seconds before having
+ * an "ok" response from the drone (other commands may too).
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void DroneWaitAndSend(const std::function<void()>& fn) {
-  if (dilloxl::TelloDrone::Get().com().waitforready(2000)) {
+  if (dilloxl::TelloDrone::Get().com().waitforready(200 /* units of 50ms each */)) {
     if (fn) { fn(); } // send is thread-safe now
   }
 }
@@ -229,20 +232,33 @@ std::string dilloxl::TelloCommunication::lastStatus() const
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
- * METHOD
+ * METHOD (The program thread will wait here)
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-bool dilloxl::TelloCommunication::waitforready(size_t timeout_ms)
+bool dilloxl::TelloCommunication::waitforready(size_t timeout_50ms)
 {
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
-  for (size_t k = 0;k < timeout_ms; ++k) {
+  for (size_t k = 0;k < timeout_50ms; ++k) {
+    bool bCPS = false, bW4R = false;
     { std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxW4RCPS };
-      if (m_pImpl->m_bControlPktSent && m_pImpl->m_bWaitForResponse) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
-      } else {
-        return true;
-      }}
+      bCPS = m_pImpl->m_bControlPktSent; bW4R = m_pImpl->m_bWaitForResponse; 
+    }
+    if (bCPS && bW4R) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    } else {
+      std::fprintf(stderr
+        , DILLOXL_TERM_FGDIMM 
+          "[COM]: RISPOSTA (CPS=%s W4R=%s)." 
+          DILLOXL_TERM_RESETA "\n"
+        ,  m_pImpl->m_bControlPktSent ? "YES" : "NO"
+        , m_pImpl->m_bWaitForResponse ? "YES" : "NO");
+      return true;
+    }
   }
-  std::fprintf(stderr, DILLOXL_TERM_GRYBLK "[COM]: TIMEOUT.\n" DILLOXL_TERM_RESETA);
+  std::fprintf(stderr
+    , DILLOXL_TERM_YLWBLK 
+      "[COM]: TIMEOUT (%zu x50ms)." 
+      DILLOXL_TERM_RESETA "\n"
+    , timeout_50ms);
   return false; // timeout
 }
 
@@ -255,7 +271,9 @@ void dilloxl::TelloCommunication::send(const std::string& msg
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
   if (SendMode::kFORCE == mode) {
     std::fprintf(stderr
-      , DILLOXL_TERM_GRYBLK "[COM]: MESSAGGIO URGENTE \"%s\"...\n" DILLOXL_TERM_RESETA
+      , DILLOXL_TERM_GRYBLK
+        "[COM]: MESSAGGIO URGENTE \"%s\"..." 
+        DILLOXL_TERM_RESETA "\n"
       , msg.c_str());
     m_pImpl->m_Send(msg);
   } else {
@@ -264,7 +282,9 @@ void dilloxl::TelloCommunication::send(const std::string& msg
       std::lock_guard<std::recursive_mutex> g{ m_pImpl->m_mtxQ };
       m_pImpl->m_qMsg.push(msg);
       std::fprintf(stderr
-        , DILLOXL_TERM_GRYBLK "[COM]: Messaggio \"%s\" accodato.\n" DILLOXL_TERM_RESETA
+        , DILLOXL_TERM_GRYBLK 
+          "[COM]: Messaggio \"%s\" accodato." 
+          DILLOXL_TERM_RESETA "\n"
         , msg.c_str());
     } else {
       m_pImpl->m_Send(msg);
@@ -386,7 +406,8 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusConnecting()
 
   // ...wait for response to activation command
   auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
-  auto ret = m_SockControl.receive(btData, sizeof(btData), szInBytes, from, u2p);
+  auto ret = m_SockControl.receive(btData, sizeof(btData)
+    , szInBytes, from, u2p);
   switch (ret) {
   case sf::Socket::Status::Done:
     m_strLastErr = "Nessuno";
@@ -425,24 +446,36 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
   size_t szInBytes = 0;
 
   // check and dequeue queued messages
-  if (!m_bWaitForResponse) { m_DequeueAndSend(); }
+  if (!m_bWaitForResponse && !m_bControlPktSent) { m_DequeueAndSend(); }
 
   // ...wait for control packets
   { auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
-    auto ret = m_SockControl.receive(btData, sizeof(btData), szInBytes, from, u2p);
+    auto ret = m_SockControl.receive(btData, sizeof(btData)
+      , szInBytes, from, u2p);
     switch (ret) {
     case sf::Socket::Status::Done: {
   #if DILLOXL_TELLOCOMM_DUMP_DEBUG == 1
         dump_data("CONTROL", btData, szInBytes);
   #endif
       std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
-      if (m_bWaitForResponse) {
+      if (m_bWaitForResponse && m_bControlPktSent) {
         m_strLastErr = "Nessuno";
         btData[std::min(sizeof(btData) - 1, szInBytes)] = 0;
-#if DILLOXL_TELLOCOMM_QUEUE_DEBUG == 1
-      std::fprintf(stderr
-        , DILLOXL_TERM_GRYBLK "[COM]: RISPOSTA RICEVUTA PER SEQ=%u, RES=%s\n" DILLOXL_TERM_RESETA
-        , m_uSeqToWaitFor, reinterpret_cast<const char*>(btData));
+#if DILLOXL_TELLOCOMM_RES_PRINT == 1
+      auto res = trim(reinterpret_cast<const char*>(btData));
+      if ("ok" == res) {
+        std::fprintf(stderr
+          , DILLOXL_TERM_GRYGRN 
+            "[COM]: RISPOSTA RICEVUTA PER SEQ=%u, RES=%s" 
+            DILLOXL_TERM_RESETA "\n"
+          , m_uSeqToWaitFor, res.c_str());
+      } else {
+        std::fprintf(stderr
+          , DILLOXL_TERM_GRYRED
+            "[COM]: RISPOSTA RICEVUTA PER SEQ=%u, RES=%s" 
+            DILLOXL_TERM_RESETA "\n"
+          , m_uSeqToWaitFor, res.c_str());
+      }
 #endif        
       } else {
         m_strLastErr = "Pacchetto di controllo inatteso";
@@ -465,7 +498,8 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
 
   // ...wait for status packets (use this for determining alive)
   { auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
-    auto ret = m_SockStatus.receive(btData, sizeof(btData), szInBytes, from, u2p);
+    auto ret = m_SockStatus.receive(btData, sizeof(btData)
+      , szInBytes, from, u2p);
     switch (ret) {
     case sf::Socket::Status::Done:
       m_strLastErr = "Nessuno";
@@ -487,7 +521,8 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
 
   // ...wait for video packets
   { auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
-    auto ret = m_SockVideo.receive(btData, sizeof(btData), szInBytes, from, u2p);
+    auto ret = m_SockVideo.receive(btData, sizeof(btData)
+      , szInBytes, from, u2p);
     switch (ret) {
     case sf::Socket::Status::Done:
       m_strLastErr = "Nessuno";
@@ -536,7 +571,7 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
     m_timerW4R = {}; // reset timer
   }
 
-
+#if 1
   // DEBUG-----
   static bool bPre_W4S, bPre_CPS;
   static uint32_t uPre_STW4 = 0;
@@ -545,7 +580,10 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
     if (( bPre_CPS !=  m_bControlPktSent) ||
         ( bPre_W4S != m_bWaitForResponse) ||
         (uPre_STW4 != m_uSeqToWaitFor)) {
-      std::fprintf(stderr, DILLOXL_TERM_GRYBLK "[COM]: W4R=%3s CPS=%3s SEQ=%8u\n" DILLOXL_TERM_RESETA
+      std::fprintf(stderr
+        , DILLOXL_TERM_FGDIMM 
+          "[COM]: W4R=%3s CPS=%3s SEQ=%8u" 
+          DILLOXL_TERM_RESETA "\n"
         , m_bWaitForResponse ? "YES" : "NO"
         , m_bControlPktSent  ? "YES" : "NO"
         , m_uSeqToWaitFor);
@@ -554,6 +592,7 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
     bPre_W4S  = m_bWaitForResponse;
     uPre_STW4 = m_uSeqToWaitFor;
   }
+#endif  
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -608,16 +647,20 @@ void dilloxl::TelloCommunication::Impl::m_Send(const std::string& msg)
       m_bWaitForResponse = false;
       m_bControlPktSent  = false;
       m_uSeqToWaitFor    = 0;
+      m_timerW4R         = {}; // reset timer
     } else {
       std::lock_guard<std::recursive_mutex> g{ m_mtxW4RCPS };
       m_strLastErr = "Attesa risposta...";
       m_bWaitForResponse = true;
       m_bControlPktSent  = true;
+      m_timerW4R         = {}; // reset timer
       m_uSeqToWaitFor++;
       m_szNControlPacketsOt++;
 #if DILLOXL_TELLOCOMM_QUEUE_DEBUG == 1
       std::fprintf(stderr
-        , DILLOXL_TERM_GRYBLK "[COM]: Messaggio \"%s\" inviato (Seq=%u). Attesa risposta...\n" DILLOXL_TERM_RESETA
+        , DILLOXL_TERM_FGDIMM
+          "[COM]: Messaggio \"%s\" inviato (Seq=%u). Attesa risposta..." 
+          DILLOXL_TERM_RESETA "\n"
         , msg.c_str(), m_uSeqToWaitFor);
 #endif        
     }

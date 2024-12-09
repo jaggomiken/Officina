@@ -91,6 +91,7 @@ dilloxl::UserProgram::UserProgram(const std::string& name)
 	  "\tcrea_oggetto_da_astrazione(Drone) dando_nome(plinio)\n"
     "\tcrea_oggetto_da_astrazione(numero_intero_positivo) dando_nome(passi)\n"
     "\tpassi = 0;\n"
+    "\tmessaggia_oggetto( plinio, video, (falso) )\n"
 	  "\tmessaggia_oggetto( plinio, decolla, (0) )\n"
     "\tfai_questo_finche_e_vero_che(passi < 3)\n"
     "\t\tmessaggia_oggetto( plinio, vai_avanti_cm, (100))\n"

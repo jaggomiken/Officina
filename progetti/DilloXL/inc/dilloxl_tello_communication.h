@@ -52,8 +52,8 @@ namespace dilloxl {
     size_t nCtrlPktsOut() const;
     size_t  nStatusPkts() const;
     size_t   nVideoPkts() const;
-                                                // false -> timeout, true -> ready
-    bool waitforready(size_t timeout_ms = 100); // thread-safe (must be invoked by another thread)
+                                                  // false -> timeout, true -> ready
+    bool waitforready(size_t timeout_50ms = 200); // thread-safe (must be invoked by another thread)
     void send(const std::string&, SendMode = SendMode::kNORMAL); // thread-safe
     void setContrlCallback(const ContrlCallback&);
     void setStatusCallback(const StatusCallback&);

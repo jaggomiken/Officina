@@ -41,28 +41,28 @@
 #define dando_nome(nome) nome;
 #define messaggia_oggetto(nome,msg,arg) \
   nome.msg arg;\
-  dilloxlprint("dico a " #nome ": " #msg #arg "\n");
+  dilloxlprint("dico a " #nome ": " #msg #arg);
 #define fine_questo }
 #define per_sempre_fai_questo \
-  dilloxlprint("per_sempre_fai_questo:\n"); \
+  dilloxlprint("per_sempre_fai_questo:"); \
   for(;;){
 #define fai_questo_per_volte(a) \
-  dilloxlprint("fai_questo_per_volte " #a ":\n"); \
+  dilloxlprint("fai_questo_per_volte " #a ":"); \
   for (size_t passo_corrente = 0; passo_corrente < a; ++passo_corrente) {
 #define fai_questo_finche_e_vero_che(a) \
-  dilloxlprint("fai_questo_finche_e_vero_che " #a ":\n"); \
+  dilloxlprint("fai_questo_finche_e_vero_che " #a ":"); \
   while (a) {
 #define fai_questo \
-  dilloxlprint("fai_questo:\n"); \
+  dilloxlprint("fai_questo:"); \
   do {
 #define e_rifallo_finche_e_vero_che(a) \
-  dilloxlprint("e_rifallo_finche_e_vero_che " #a " ...\n"); \
+  dilloxlprint("e_rifallo_finche_e_vero_che " #a " ..."); \
   } while (a);
 #define se_e_vero_che(a)      if (a)
 #define allora_fai_questo     {
 #define altrimenti_fai_questo } else {
 #define fai_dormire_il_processo_per_millisecondi(x) \
-  dilloxlprint("fai_dormire_il_processo_per_millisecondi %u ...\n",x); \
+  dilloxlprint("fai_dormire_il_processo_per_millisecondi %u ...",x); \
   std::this_thread::sleep_for(std::chrono::milliseconds(x));
 #define chiedi_informazione_a(a) a.lastStatus().u.status
 #define chiedi_a(a,m,c) a.m c;
@@ -87,6 +87,7 @@ struct UserProgramContext {
   void (*drone_takeoff)(float);
   void (*drone_land)(float);
   void (*drone_stop)(float);
+  void (*drone_video)(bool);
   void* pOpaque;
 };
 
@@ -106,6 +107,7 @@ struct Drone {
   void                      decolla(float v);
   void                      atterra(float v);
   void                         stop(float v);
+  void                        video( bool v);
 private:;
   UserProgramContext* m_pctx;
 };

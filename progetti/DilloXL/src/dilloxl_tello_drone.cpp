@@ -170,7 +170,7 @@ void dilloxl::TelloDrone::move_down(float value)
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloDrone::rotate_cw(float value)
 {
-  char msg[64]; std::snprintf(msg, sizeof(msg), "cw %.3f", value);
+  char msg[64]; std::snprintf(msg, sizeof(msg), "cw %.0f", value);
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
   m_pImpl->m_com.send(msg);
 }
@@ -180,7 +180,7 @@ void dilloxl::TelloDrone::rotate_cw(float value)
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloDrone::rotate_cc(float value)
 {
-  char msg[64]; std::snprintf(msg, sizeof(msg), "ccw %.3f", value);
+  char msg[64]; std::snprintf(msg, sizeof(msg), "ccw %.0f", value);
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
   m_pImpl->m_com.send(msg);
 }
@@ -201,6 +201,17 @@ void dilloxl::TelloDrone::forward(float value)
 void dilloxl::TelloDrone::backward(float value)
 {
   char msg[64]; std::snprintf(msg, sizeof(msg), "back %.0f", value);
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  m_pImpl->m_com.send(msg);
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+void dilloxl::TelloDrone::video(bool value)
+{
+  char msg[64]; std::snprintf(msg, sizeof(msg), "stream%s"
+    , value ? "on" : "off");
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
   m_pImpl->m_com.send(msg);
 }

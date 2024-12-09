@@ -15,20 +15,25 @@
 int main(int argc, char* argv[]) 
 {
   const char* pTitle = 
-    "DILLO XL Versione 1.0.1 - "
+    "DILLO XL Versione 1.0.2 - "
     "By Prof. Michele Iacobellis (COLAMONICO-CHIARULLI)";
   std::fprintf(stderr, "[DILLOXL]: %s\n", pTitle);
   std::fprintf(stderr, "[DILLOXL]: argv[1] = valore scala display.\n");
+  std::fprintf(stderr, "[DILLOXL]: argv[2] = limite framerate.\n");
+  std::fprintf(stderr, "[DILLOXL]: E' preferibile mettere 0 perche' il "
+    "traffico di rete e' gestito nel ciclo della GUI.\n");
+
+  const float scale = std::atof(nullptr == argv[1] ? "1.5" : argv[1]);
+  std::fprintf(stderr, "[DILLOXL]:  Valore di scala: %f\n", scale);
+  const uint32_t uFRL = std::atoi(nullptr == argv[2] ? "0" : argv[2]);
+  std::fprintf(stderr, "[DILLOXL]: Limite framerate: %u\n", uFRL);
 
   sf::RenderWindow window(sf::VideoMode({ 1800, 1000 }), pTitle);
-  window.setFramerateLimit(60);
+  window.setFramerateLimit(uFRL);
   if (!ImGui::SFML::Init(window)) {
     std::fprintf(stderr, "[DILLOXL]: Errore di init.\n");
     return 1;
   }
-
-  const float scale = std::atof(nullptr == argv[1] ? "1.5" : argv[1]);
-  std::fprintf(stderr, "[DILLOXL]: Valore di scala: %f\n", scale);
 
   auto& style = ImGui::GetStyle();
   style.FrameRounding   = 3;

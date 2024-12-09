@@ -114,14 +114,14 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("cm");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderInt("##1", &m_iSxCm, 50, 400);
+    ImGui::SliderInt("##1", &m_iSxCm, 20, 500);
     ImGui::SameLine();
     if (ImGui::Button("SX", { fWL, .0f })) { drone.move_left(float(m_iSxCm)); }
     ImGui::SameLine();
     if (ImGui::Button("DX", { fWL, .0f })) { drone.move_right(float(m_iDxCm)); }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderInt("##2", &m_iDxCm, 50, 400);
+    ImGui::SliderInt("##2", &m_iDxCm, 20, 500);
     ImGui::SameLine();
     ImGui::TextUnformatted("cm");
 
@@ -129,14 +129,14 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("cm");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderInt("##3", &m_iUpCm, 50, 400);
+    ImGui::SliderInt("##3", &m_iUpCm, 20, 500);
     ImGui::SameLine(); 
     if (ImGui::Button(   "Su",{ fWL, .0f })) { drone.move_up(float(m_iUpCm)); }
     ImGui::SameLine();
     if (ImGui::Button(u8"Giù",{ fWL, .0f })) { drone.move_down(float(m_iDnCm)); }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderInt("##4", &m_iDnCm, 50, 400);
+    ImGui::SliderInt("##4", &m_iDnCm, 20, 500);
     ImGui::SameLine();
     ImGui::TextUnformatted("cm");
 
@@ -144,14 +144,14 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted("cm");
     ImGui::SameLine(); 
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderInt("##5", &m_iFwCm, 50, 400);
+    ImGui::SliderInt("##5", &m_iFwCm, 20, 500);
     ImGui::SameLine();
     if (ImGui::Button("Avanti",{ fWL, .0f })) { drone.forward(float(m_iFwCm)); }
     ImGui::SameLine();
     if (ImGui::Button("Indietro",{ fWL, .0f })) { drone.backward(float(m_iBwCm)); }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderInt("##6", &m_iBwCm, 50, 400);
+    ImGui::SliderInt("##6", &m_iBwCm, 20, 500);
     ImGui::SameLine();
     ImGui::TextUnformatted("cm");
 
@@ -159,14 +159,14 @@ void dilloxl::GuiConsole::Impl::draw()
     ImGui::TextUnformatted(u8" °");
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderFloat("##7", &m_fCwDeg, .0f, 359.0f);
+    ImGui::SliderFloat("##7", &m_fCwDeg, 1.0f, 360.0f);
     ImGui::SameLine(); 
     if (ImGui::Button("Rot CW",{ fWL, .0f })) { drone.rotate_cw(m_fCwDeg); }
     ImGui::SameLine();
     if (ImGui::Button("Rot CC",{ fWL, .0f })) { drone.rotate_cc(m_fCcDeg); }
     ImGui::SameLine();
     ImGui::SetNextItemWidth(fWS);
-    ImGui::SliderFloat("##8", &m_fCcDeg, .0f, 359.0f);
+    ImGui::SliderFloat("##8", &m_fCcDeg, 1.0f, 360.0f);
     ImGui::SameLine();
     ImGui::TextUnformatted(u8"° ");
 

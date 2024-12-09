@@ -10,14 +10,15 @@
 #include <imgui.h>
 #include <atomic>
 #include <thread>
+#include <cmath>
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * STRUCT
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 struct PropDesc {
   bool checkchangedandwrite(float v) {
-    if (fValue == v) { uChanged = 0;             }
-    else             { uChanged = 1; fValue = v; }
+    if (std::fabs(fValue - v) <= FLT_EPSILON) { uChanged = 0;             }
+    else                                      { uChanged = 1; fValue = v; }
     return (1 == uChanged);
   }
 
@@ -31,23 +32,23 @@ struct PropDesc {
  * TABLE
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 static std::vector<PropDesc> gvPropDescs{
-    {            "pitch",                 "Pitch", 1, 0.0f }
-  , {             "roll",                  "Roll", 1, 0.0f }
-  , {              "yaw",                   "Yaw", 1, 0.0f }
-  , {          "speed_x",    u8"Velocità Lungo X", 1, 0.0f }
-  , {          "speed_y",    u8"Velocità Lungo Y", 1, 0.0f }
-  , {          "speed_z",    u8"Velocità Lungo Z", 1, 0.0f }
-  , {   "temperature_lo",       "Temperatura Max", 1, 0.0f }
-  , {   "temperature_hi",       "Temperatura Min", 1, 0.0f }
-  , {   "time_of_flight",         "Tempo di Volo", 1, 0.0f }
-  , {"height_from_floor",      "Altezza da Terra", 1, 0.0f }
-  , {    "battery_level",              "Batteria", 1, 0.0f }
-  , {     "barometer_cm",             "Barometro", 1, 0.0f }
-  , {       "motor_time",          "Tempo Motore", 1, 0.0f }
-  , {   "acceleration_x", "Accelerazione Lungo X", 1, 0.0f }
-  , {   "acceleration_y", "Accelerazione Lungo Y", 1, 0.0f }
-  , {   "acceleration_z", "Accelerazione Lungo Z", 1, 0.0f }
-  , {         "sequence",              "Sequenza", 1, 0.0f }
+    {            "pitch",                 "Pitch", 0, 0.0f }
+  , {             "roll",                  "Roll", 0, 0.0f }
+  , {              "yaw",                   "Yaw", 0, 0.0f }
+  , {          "speed_x",    u8"Velocità Lungo X", 0, 0.0f }
+  , {          "speed_y",    u8"Velocità Lungo Y", 0, 0.0f }
+  , {          "speed_z",    u8"Velocità Lungo Z", 0, 0.0f }
+  , {   "temperature_lo",       "Temperatura Min", 0, 0.0f }
+  , {   "temperature_hi",       "Temperatura Max", 0, 0.0f }
+  , {   "time_of_flight",         "Tempo di Volo", 0, 0.0f }
+  , {"height_from_floor",      "Altezza da Terra", 0, 0.0f }
+  , {    "battery_level",              "Batteria", 0, 0.0f }
+  , {     "barometer_cm",             "Barometro", 0, 0.0f }
+  , {       "motor_time",          "Tempo Motore", 0, 0.0f }
+  , {   "acceleration_x", "Accelerazione Lungo X", 0, 0.0f }
+  , {   "acceleration_y", "Accelerazione Lungo Y", 0, 0.0f }
+  , {   "acceleration_z", "Accelerazione Lungo Z", 0, 0.0f }
+  , {         "sequence",              "Sequenza", 0, 0.0f }
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

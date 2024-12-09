@@ -1,0 +1,50 @@
+#include "dilloxl"
+
+//
+// Il mio primo programma che fa volare il drone Tello.
+// Il tuo nome e cognome: <scrivi qui>
+// La data di oggi: AAAA-MM-GG
+//
+// COMANDI DEL DRONE:
+// 	-vai_a_sinistra_cm
+// 	-vai_a_destra_cm
+// 	-vai_su_cm
+// 	-vai_giu_cm
+// 	-ruota_senso_orario_gradi
+// 	-ruota_senso_antiorario_gradi
+// 	-vai_avanti_cm
+// 	-vai_indietro_cm
+// 	-decolla
+// 	-atterra
+// 	-stop
+
+programma_inizio
+	crea_oggetto_da_astrazione(Drone) dando_nome(plinio)
+	crea_oggetto_da_astrazione(numero_intero_positivo) dando_nome(passi)
+	passi = 0;
+	messaggia_oggetto( plinio, video, (falso) )
+	messaggia_oggetto( plinio, decolla, (0) )
+	fai_questo_finche_e_vero_che(passi < 2)
+		messaggia_oggetto( plinio, vai_avanti_cm, (50))
+		passi = passi + 1;
+	fine_questo
+	messaggia_oggetto( plinio, ruota_senso_antiorario_gradi, (90))	
+	passi = 0;
+	fai_questo_finche_e_vero_che(passi < 1)
+		messaggia_oggetto( plinio, vai_avanti_cm, (50))
+		passi = passi + 1;
+	fine_questo
+	messaggia_oggetto( plinio, ruota_senso_antiorario_gradi, (90))	
+	passi = 0;
+	fai_questo_finche_e_vero_che(passi < 2)
+		messaggia_oggetto( plinio, vai_avanti_cm, (50))
+		passi = passi + 1;
+	fine_questo
+	messaggia_oggetto( plinio, ruota_senso_antiorario_gradi, (90))	
+	passi = 0;
+	fai_questo_finche_e_vero_che(passi < 1)
+		messaggia_oggetto( plinio, vai_avanti_cm, (50))
+		passi = passi + 1;
+	fine_questo
+	messaggia_oggetto( plinio, atterra, (0) )
+programma_fine
