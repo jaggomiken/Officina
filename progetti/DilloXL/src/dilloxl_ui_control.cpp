@@ -16,15 +16,19 @@
  * STRUCT
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 struct PropDesc {
-  bool checkchangedandwrite(float v) {
-    if (std::fabs(fValue - v) <= FLT_EPSILON) { uChanged = 0;             }
-    else                                      { uChanged = 1; fValue = v; }
-    return (1 == uChanged);
+  static const uint32_t kMAX = 500;
+  void checkchangedandwrite(float v) {
+    if (std::fabs(fValue - v) <= FLT_EPSILON) { 
+      iChanged -= 1; if (iChanged < 0) { iChanged = 0; } 
+    }
+    else { 
+      iChanged  = kMAX; fValue = v; 
+    }
   }
 
   std::string name;
   std::string labl;
-     uint32_t uChanged;
+      int32_t iChanged;
         float fValue;
 };
 
@@ -32,23 +36,23 @@ struct PropDesc {
  * TABLE
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 static std::vector<PropDesc> gvPropDescs{
-    {            "pitch",                 "Pitch", 0, 0.0f }
-  , {             "roll",                  "Roll", 0, 0.0f }
-  , {              "yaw",                   "Yaw", 0, 0.0f }
-  , {          "speed_x",    u8"Velocità Lungo X", 0, 0.0f }
-  , {          "speed_y",    u8"Velocità Lungo Y", 0, 0.0f }
-  , {          "speed_z",    u8"Velocità Lungo Z", 0, 0.0f }
-  , {   "temperature_lo",       "Temperatura Min", 0, 0.0f }
-  , {   "temperature_hi",       "Temperatura Max", 0, 0.0f }
-  , {   "time_of_flight",         "Tempo di Volo", 0, 0.0f }
-  , {"height_from_floor",      "Altezza da Terra", 0, 0.0f }
-  , {    "battery_level",              "Batteria", 0, 0.0f }
-  , {     "barometer_cm",             "Barometro", 0, 0.0f }
-  , {       "motor_time",          "Tempo Motore", 0, 0.0f }
-  , {   "acceleration_x", "Accelerazione Lungo X", 0, 0.0f }
-  , {   "acceleration_y", "Accelerazione Lungo Y", 0, 0.0f }
-  , {   "acceleration_z", "Accelerazione Lungo Z", 0, 0.0f }
-  , {         "sequence",              "Sequenza", 0, 0.0f }
+    {            "pitch",                 "Pitch", PropDesc::kMAX / 6, 0.0f }
+  , {             "roll",                  "Roll", PropDesc::kMAX / 6, 0.0f }
+  , {              "yaw",                   "Yaw", PropDesc::kMAX / 6, 0.0f }
+  , {          "speed_x",    u8"Velocità Lungo X", PropDesc::kMAX / 6, 0.0f }
+  , {          "speed_y",    u8"Velocità Lungo Y", PropDesc::kMAX / 6, 0.0f }
+  , {          "speed_z",    u8"Velocità Lungo Z", PropDesc::kMAX / 6, 0.0f }
+  , {   "temperature_lo",       "Temperatura Min", PropDesc::kMAX / 6, 0.0f }
+  , {   "temperature_hi",       "Temperatura Max", PropDesc::kMAX / 6, 0.0f }
+  , {   "time_of_flight",         "Tempo di Volo", PropDesc::kMAX / 6, 0.0f }
+  , {"height_from_floor",      "Altezza da Terra", PropDesc::kMAX / 6, 0.0f }
+  , {    "battery_level",              "Batteria", PropDesc::kMAX / 6, 0.0f }
+  , {     "barometer_cm",             "Barometro", PropDesc::kMAX / 6, 0.0f }
+  , {       "motor_time",          "Tempo Motore", PropDesc::kMAX / 6, 0.0f }
+  , {   "acceleration_x", "Accelerazione Lungo X", PropDesc::kMAX / 6, 0.0f }
+  , {   "acceleration_y", "Accelerazione Lungo Y", PropDesc::kMAX / 6, 0.0f }
+  , {   "acceleration_z", "Accelerazione Lungo Z", PropDesc::kMAX / 6, 0.0f }
+  , {         "sequence",              "Sequenza", PropDesc::kMAX / 6, 0.0f }
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -65,6 +69,7 @@ public:
   size_t m_szNStatusPktsLast;
   bool m_bShowRunProg;
   bool m_bShowTakeoff;
+  bool m_bCodeCompiled;
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -123,6 +128,7 @@ dilloxl::GuiControl::Impl::Impl()
   , m_szNStatusPktsLast {     0 }
   , m_bShowRunProg      { false }
   , m_bShowTakeoff      { false }
+  , m_bCodeCompiled     { false }
 {
 }
 
@@ -213,12 +219,16 @@ void dilloxl::GuiControl::Impl::draw()
     bool bDis = false;
     if (0 != m_szThreadStarted) { ImGui::BeginDisabled(); bDis = true; }
     if (ImGui::Button("Controlla")) {
-      UserProgram::GetCurrent().build();
+      if (UserProgram::GetCurrent().build()) {
+        m_bCodeCompiled = true;
+      } else {
+        m_bCodeCompiled = false;
+      }
     }
     ImGui::SameLine();
-    if (1 == m_szThreadStarted) { ImGui::BeginDisabled(); }
+    if (1 == m_szThreadStarted || !m_bCodeCompiled) { ImGui::BeginDisabled(); }
     if (ImGui::Button("Esegui")) { m_bShowRunProg = true; }
-    if (1 == m_szThreadStarted) { ImGui::EndDisabled(); }
+    if (1 == m_szThreadStarted || !m_bCodeCompiled) { ImGui::EndDisabled(); }
     if (bDis) { ImGui::EndDisabled(); }
     ImGui::SameLine();
     
@@ -246,13 +256,16 @@ void dilloxl::GuiControl::Impl::draw()
       ImGui::Text("SPENTO");
     }
     ImGui::Separator();
-    ImGui::TextUnformatted("STATO DEL DRONE TELLO");
+    ImGui::Text("STATO DEL DRONE TELLO >%s<"
+      , drone.com().serial().c_str());
     ImGui::Separator();
     for (const auto& item : gvPropDescs) {
-      if (1 == item.uChanged) {
-        ImGui::TextColored({1.0, 1.0, 1.0, 1.0 }, "> %+8.2f", item.fValue);
+      if (item.iChanged > (PropDesc::kMAX / 5)) {
+        float fc = float(item.iChanged) / float(PropDesc::kMAX);
+        if (fc <= 0.7f) { fc = 0.7f; }
+        ImGui::TextColored({ fc,  fc,  fc, 1.0 }, "> %+8.2f", item.fValue);
         ImGui::SameLine();
-        ImGui::TextColored({1.0, 1.0, 1.0, 1.0 }, "%s <", item.labl.c_str());
+        ImGui::TextColored({ fc,  fc,  fc, 1.0 }, "%s <", item.labl.c_str());
       } else {
         ImGui::TextColored({0.7, 0.7, 0.7, 1.0 }, "  %+8.2f", item.fValue);
         ImGui::SameLine();

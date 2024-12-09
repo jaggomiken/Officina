@@ -25,7 +25,7 @@ namespace dilloxl {
     void setSource(const std::string&);
     std::string source() const;
 
-    void build();
+    bool build();
     void run();
 
   private:

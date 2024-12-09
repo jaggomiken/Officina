@@ -15,7 +15,7 @@
 int main(int argc, char* argv[]) 
 {
   const char* pTitle = 
-    "DILLO XL Versione 1.0.2 - "
+    "DILLO XL Versione 1.1.0 - "
     "By Prof. Michele Iacobellis (COLAMONICO-CHIARULLI)";
   std::fprintf(stderr, "[DILLOXL]: %s\n", pTitle);
   std::fprintf(stderr, "[DILLOXL]: argv[1] = valore scala display.\n");

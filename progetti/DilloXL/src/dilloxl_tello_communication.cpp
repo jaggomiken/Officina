@@ -8,6 +8,7 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <memory.h>
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * MACROS
@@ -54,7 +55,10 @@ public:
   , m_bWaitForResponse    {              false }
   , m_bControlPktSent     {              false }
   , m_uSeqToWaitFor       {                  0 }
-  {}
+  {
+    ::memset(m_strSerial, 0, sizeof(m_strSerial));
+    m_strSerial[0] = '?';
+  }
 
  ~Impl() {
 
@@ -84,12 +88,13 @@ public:
   std::queue<std::string> m_qMsg;
   uint32_t m_uSeqToWaitFor;
   std::recursive_mutex m_mtxQ;
+  char m_strSerial[64];
 
   void m_OnStatusUnconnected();
   void m_OnStatusConnecting(); 
   void m_OnStatusConnected();  
   void m_OnStatusWorking();    
-  void m_OnStatusEmergency();  
+  void m_OnStatusGetInfo();  
   void m_OnStatusError();      
   void m_OnStatusUndefined();
   void m_DequeueAndSend();
@@ -107,7 +112,7 @@ std::string dilloxl::TelloCommunication::StatusToString(Status st)
   case Status::kCONNECTING : return "IN CONNESSIONE";
   case Status::kCONNECTED  : return "CONNESSO";
   case Status::kWORKING    : return "A LAVORO";
-  case Status::kEMERGENCY  : return "IN EMERGENZA";
+  case Status::kGETINFO    : return "RACCOLTA INFO";
   case Status::kERROR      : return "IN ERRORE";
   default: break;
   }
@@ -207,7 +212,7 @@ void dilloxl::TelloCommunication::execute()
   case  Status::kCONNECTING: m_pImpl->m_OnStatusConnecting();  break;
   case   Status::kCONNECTED: m_pImpl->m_OnStatusConnected();   break;
   case     Status::kWORKING: m_pImpl->m_OnStatusWorking();     break;
-  case   Status::kEMERGENCY: m_pImpl->m_OnStatusEmergency();   break;
+  case     Status::kGETINFO: m_pImpl->m_OnStatusGetInfo();     break;
   case       Status::kERROR: m_pImpl->m_OnStatusError();       break;
   default:                   m_pImpl->m_OnStatusUndefined();   break;
   }
@@ -376,6 +381,15 @@ size_t dilloxl::TelloCommunication::nVideoPkts() const
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+std::string dilloxl::TelloCommunication::serial() const 
+{ 
+  DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
+  return m_pImpl->m_strSerial;
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * METHOD
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::Impl::m_OnStatusUnconnected()
 {
   // send activation command...
@@ -434,7 +448,22 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusConnecting()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::TelloCommunication::Impl::m_OnStatusConnected() 
 {
-  m_st = Status::kWORKING;
+  // send get-serial command...
+  std::string msg{ "sn?" };
+  auto to = sf::IpAddress::resolve(kTELLO_IPv4);
+  if (m_SockControl.send(msg.c_str(), msg.size() + 1 // notice the +1 here
+    , to.value(), kUDP_PORT_CONTROL) != sf::Socket::Status::Done) 
+  {
+    m_strLastErr = "Invio messaggio informativo fallito";
+    m_st = Status::kERROR;
+  } else {
+    m_strLastErr = "Nessuno";
+    m_st = Status::kGETINFO;
+    m_szNControlPacketsOt++;
+    m_bControlPktSent  = true;
+    m_bWaitForResponse = true;
+    m_uSeqToWaitFor++;
+  }
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -598,9 +627,37 @@ void dilloxl::TelloCommunication::Impl::m_OnStatusWorking()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-void dilloxl::TelloCommunication::Impl::m_OnStatusEmergency()
+void dilloxl::TelloCommunication::Impl::m_OnStatusGetInfo()
 {
+  uint8_t btData[128];
+  size_t szInBytes = 0;
 
+  // ...wait for response to activation command
+  auto from = sf::IpAddress::resolve({}); uint16_t u2p = 0;
+  auto ret = m_SockControl.receive(btData, sizeof(btData)
+    , szInBytes, from, u2p);
+  switch (ret) {
+  case sf::Socket::Status::Done:
+    btData[std::min(sizeof(btData) - 1, szInBytes)] = 0;
+    std::snprintf(m_strSerial, sizeof(m_strSerial)
+      , "%s", reinterpret_cast<const char*>(btData));
+    m_strLastErr = "Nessuno";
+    m_st = Status::kWORKING;
+    m_szNControlPacketsIn++;
+    m_bWaitForResponse = false;
+    m_bControlPktSent  = false;
+    m_uSeqToWaitFor    = 0;
+#if DILLOXL_TELLOCOMM_DUMP_DEBUG == 1
+    dump_data("CTRL", btData, szInBytes);
+#endif    
+    break;
+  case sf::Socket::Status::NotReady:
+    break;
+  default:
+    m_strLastErr = "Errore ricezione risposta a informazioni";
+    m_st = Status::kERROR;
+    break;
+  }
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

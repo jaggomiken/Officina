@@ -29,7 +29,7 @@ class dilloxl::UserProgram::Impl {
 public:
   Impl();
  ~Impl();
-  void build();
+  bool build();
   void run();
 
   std::string m_strName;
@@ -164,10 +164,10 @@ std::string dilloxl::UserProgram::source() const
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-void dilloxl::UserProgram::build()
+bool dilloxl::UserProgram::build()
 {
   DILLOXL_CAPTURE_CPU(nullptr == m_pImpl, "Puntatore a Impl è NULL");
-  m_pImpl->build();
+  return m_pImpl->build();
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -196,7 +196,7 @@ dilloxl::UserProgram::Impl::~Impl()
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-void dilloxl::UserProgram::Impl::build()
+bool dilloxl::UserProgram::Impl::build()
 {
   FILE* fp = ::fopen(DILLOXL_IF_SOURCEFILENAME, "w+");
   if (nullptr != fp) {
@@ -204,7 +204,7 @@ void dilloxl::UserProgram::Impl::build()
     ::fclose (fp);
   } else {
     std::fprintf(stderr, "[PRO]: Impossibile salvare il file.\n");
-    return;
+    return false;
   }
 
 #ifdef WIN32
@@ -236,12 +236,17 @@ void dilloxl::UserProgram::Impl::build()
       , "[PRO]: Impossibile lanciare il compilatore (%d)\n"
       , ::GetLastError());
   } else {
+    DWORD wExit = DWORD(-1);
     std::fprintf(stderr, "[PRO]: Controllo programma...\n");
     WaitForSingleObject( pi.hProcess, INFINITE );
+    GetExitCodeProcess(pi.hProcess, &wExit);
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );    
-    std::fprintf(stderr, "[PRO]: Controllato.\n");
+    std::fprintf(stderr, "[PRO]: Controllato (Esito %u).\n", wExit);
+    return (0 == wExit);
   }
+
+  return false;
 #else
 #endif
 }

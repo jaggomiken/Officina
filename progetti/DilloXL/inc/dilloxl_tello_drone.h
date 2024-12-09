@@ -54,7 +54,6 @@ namespace dilloxl {
     void takeoff();
     void land();
     void emergency();
-    void reset();
 
     // commands without priority (ENQUEUE)
     void stop();
@@ -72,7 +71,8 @@ namespace dilloxl {
     const Status& lastStatus() const;
     const std::string& lastCommandResult() const;
     TelloCommunication& com();
-
+    void reset();
+    
   private:
     class Impl; Impl* m_pImpl;
   };

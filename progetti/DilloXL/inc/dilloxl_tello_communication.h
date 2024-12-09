@@ -16,7 +16,6 @@ namespace dilloxl {
     static constexpr     uint16_t kUDP_PORT_STATUS       = 8890;
     static constexpr     uint16_t kUDP_PORT_VIDEO        = 11111;
     static constexpr  const char* kTELLO_IPv4            = "192.168.10.1";
-    static constexpr const size_t kTELLO_INTERCOMMAND_MS = 100;
 
     enum class SendMode : uint32_t { kNORMAL = 0, kFORCE = 1 };
     enum class Status : uint32_t {
@@ -24,8 +23,8 @@ namespace dilloxl {
       , kUNCONNECTED = 1
       , kCONNECTING  = 2
       , kCONNECTED   = 3
-      , kWORKING     = 4
-      , kEMERGENCY   = 5
+      , kGETINFO     = 4
+      , kWORKING     = 5
       , kERROR       = 6
     };
 
@@ -47,6 +46,7 @@ namespace dilloxl {
     void execute();
     const std::string& lastError() const;
     std::string lastStatus() const;
+    std::string serial() const;
 
     size_t  nCtrlPktsIn() const;
     size_t nCtrlPktsOut() const;
