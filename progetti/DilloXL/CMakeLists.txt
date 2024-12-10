@@ -34,12 +34,25 @@ set(INC
 )
 set(EXT ext/TextEditor.h ext/TextEditor.cpp)
 add_executable(dilloxl ${SRC} ${INC} ${EXT})
+set_target_properties(dilloxl PROPERTIES OUTPUT_NAME "dilloxl-exec")
 target_include_directories(dilloxl PUBLIC inc ext)
 target_link_libraries(dilloxl PRIVATE ImGui-SFML::ImGui-SFML SFML::Audio SFML::Network)
 target_compile_options(dilloxl PRIVATE ${IMGUI_SFML_WARNINGS})
-target_link_options(dilloxl PUBLIC "-Wl,--export-all-symbols")
+if (WIN32)
+  target_link_options(dilloxl PUBLIC "-Wl,--export-all-symbols")
+endif()
 include(GNUInstallDirs)
 install(TARGETS dilloxl
     RUNTIME DESTINATION bin)
-install(FILES inc/dilloxl ${CMAKE_BINARY_DIR}/libdilloxl.dll.a
+if (WIN32)
+  install(FILES 
+    inc/dilloxl 
+    fonts/NovaMono-Regular.ttf
+    ${CMAKE_BINARY_DIR}/libdilloxl.dll.a
     DESTINATION bin)
+else()
+  install(FILES 
+    inc/dilloxl 
+    fonts/NovaMono-Regular.ttf
+    DESTINATION bin)
+endif()

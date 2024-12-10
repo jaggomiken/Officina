@@ -137,11 +137,7 @@ dilloxl::GuiControl::Impl::Impl()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 dilloxl::GuiControl::Impl::~Impl()
 {
-  if (0 != m_szThreadStarted) {
-    if (m_threadTello.joinable()) {
-      m_threadTello.join();
-    }
-  }
+  if (m_threadTello.joinable()) { m_threadTello.join(); }
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

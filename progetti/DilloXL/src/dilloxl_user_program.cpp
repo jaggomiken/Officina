@@ -11,11 +11,17 @@
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * INCLUDES FOR OPERATING SYSTEM
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-#define WIN32
 #ifdef WIN32
 # include <Windows.h>
 # include <userenv.h>
 #else
+# include <cstdlib>
+# include <unistd.h>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <cstring>
+# include <cerrno>
+# include <dlfcn.h>
 #endif
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -245,9 +251,41 @@ bool dilloxl::UserProgram::Impl::build()
     std::fprintf(stderr, "[PRO]: Controllato (Esito %u).\n", wExit);
     return (0 == wExit);
   }
-
+  return false;
+#elif defined(__APPLE__)
+  auto pid = fork();
+  if (0 == pid) {
+    const char* pprg   = "/usr/bin/cc";
+    const char* argv[] = {
+        "/usr/bin/cc"
+      , "-bundle"
+      , "-bundle_loader"
+      , "./dilloxl-exec"
+      , "-o"
+      , DILLOXL_IF_DLLNAME
+      , DILLOXL_IF_SOURCEFILENAME
+      , NULL
+    };
+    std::fprintf(stderr, "[PRO]: Controllo programma...\n");
+    if (::execve(pprg, const_cast<char*const*>(argv), nullptr) < 0) {
+      std::fprintf(stderr
+        , "[PRO]: Errore nel lanciare il compilatore (%s)\n"
+        , ::strerror(errno));
+    }
+  } else {
+    int32_t st = -1;
+    if (0 > ::waitpid(pid, &st, 0)) {
+      std::fprintf(stderr
+        , "[PRO]: Errore nell'attendere esito compilatore (%s)\n"
+        , ::strerror(errno));
+    } else {
+      std::fprintf(stderr, "[PRO]: Controllato (Esito %d).\n", st);
+      return (0 == st);
+    }
+  }
   return false;
 #else
+  return false;
 #endif
 }
 
@@ -280,5 +318,27 @@ void dilloxl::UserProgram::Impl::run()
     ::FreeLibrary(hm);
   }
 #else
+  auto hm = ::dlopen(DILLOXL_IF_DLLNAME, RTLD_LOCAL);
+  if (NULL == hm) {
+    std::fprintf(stderr
+      , "[PRO]: Errore: dlopen, %s\n", ::dlerror());
+  } else {
+    auto fn = ::dlsym(hm, DILLOXL_IF_SYMBOL);
+    if (NULL == fn) {
+      std::fprintf(stderr
+        , "[PRO]: Errore: dlsym(%s), %s\n"
+        , DILLOXL_IF_SYMBOL, ::dlerror());
+    }
+    else {
+      SetupUserProgramContext(&m_upc, this);
+      std::fprintf(stderr
+        , "[PRO]: Sto per lanciare il programma utente...\n");
+      typedef void (*UP)(UserProgramContext*);
+      UP fn_up = UP(fn); fn_up(&m_upc);
+      std::fprintf(stderr
+        , "[PRO]: Fatto. Che si vede?\n");
+    }
+    ::dlclose(hm);
+  }
 #endif
 }
