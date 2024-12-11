@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../00_IacoSDK/include/**"
+                "${workspaceFolder}/../00_IacoSDK/include/**",
+                "${workspaceFolder}/../../../00_IacoSDK/include/**"
             ],
             "defines": [
                 "_DEBUG",
