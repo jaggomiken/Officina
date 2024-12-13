@@ -82,7 +82,11 @@ dilloxl::TelloDrone::TelloDrone(TelloCommunication& com)
   com.setContrlCallback([=](const uint8_t* pData, size_t szSizeInByte) {
     m_pImpl->m_strLastCmdRes = std::string{ 
       reinterpret_cast<const char*>(pData), szSizeInByte };
-  });  
+  });
+  bool DecodePacket(const uint8_t* pData, size_t sz);
+  com.setVideosCallback([=](const uint8_t* pData, size_t szSizeInByte) {
+    DecodePacket(pData, szSizeInByte);
+  });
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<

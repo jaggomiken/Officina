@@ -24,6 +24,7 @@
 #include "dilloxl_ui_console.h"
 #include "dilloxl_ui_control.h"
 #include "dilloxl_ui_editor.h"
+#include "dilloxl_ui_video.h"
 #include "dilloxl_user_program.h"
 #include <imgui.h>
 #include <imgui-SFML.h>
@@ -31,7 +32,7 @@
 int main(int argc, char* argv[]) 
 {
   const char* pTitle = 
-    "DILLO XL Versione 1.2.0 - "
+    "DILLO XL Versione 1.3.0 - "
     "By Prof. Michele Iacobellis (COLAMONICO-CHIARULLI)";
   std::fprintf(stderr, "[DILLOXL]: %s\n", pTitle);
   std::fprintf(stderr, "[DILLOXL]: argv[1] = valore scala display.\n");
@@ -74,6 +75,7 @@ int main(int argc, char* argv[])
   dilloxl::UserProgram::Configure(argc, argv);
   dilloxl::UserProgram program{"Studente"};
 
+  dilloxl::GuiVideo ui_Video;
   dilloxl::GuiConsole ui_Console;
   dilloxl::GuiControl ui_Control;
   dilloxl::GuiEditor ui_Editor;
@@ -106,7 +108,8 @@ int main(int argc, char* argv[])
      ui_Editor.draw();
     ui_Control.draw();
     ui_Console.draw();
-
+      ui_Video.draw();
+      
     window.clear();
     ImGui::SFML::Render(window);
     window.display();
