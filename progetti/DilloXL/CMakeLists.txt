@@ -43,6 +43,7 @@ set(SRC
     src/dilloxl_ui_video.cpp 
     src/dilloxl_user_program.cpp
     src/dilloxl_if.cpp
+    src/dilloxl_video_decoder.cpp
 )
 set(INC 
     inc/dilloxl_priv.h 
@@ -55,6 +56,7 @@ set(INC
     inc/dilloxl_ui_video.h 
     inc/dilloxl_user_program.h
     inc/dilloxl_if.h
+    inc/dilloxl_video_decoder.h
     inc/dilloxl
 )
 set(EXT ext/TextEditor.h ext/TextEditor.cpp)

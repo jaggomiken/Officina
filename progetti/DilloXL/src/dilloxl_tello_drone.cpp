@@ -21,6 +21,7 @@
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #include "dilloxl_tello_communication.h"
 #include "dilloxl_tello_drone.h"
+#include "dilloxl_video_decoder.h"
 #include <memory.h>
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -83,9 +84,8 @@ dilloxl::TelloDrone::TelloDrone(TelloCommunication& com)
     m_pImpl->m_strLastCmdRes = std::string{ 
       reinterpret_cast<const char*>(pData), szSizeInByte };
   });
-  bool DecodePacket(const uint8_t* pData, size_t sz);
   com.setVideosCallback([=](const uint8_t* pData, size_t szSizeInByte) {
-    DecodePacket(pData, szSizeInByte);
+    VideoDecoder::Get().feed(pData, szSizeInByte);
   });
 }
 

@@ -26,6 +26,7 @@
 #include "dilloxl_ui_editor.h"
 #include "dilloxl_ui_video.h"
 #include "dilloxl_user_program.h"
+#include "dilloxl_video_decoder.h"
 #include <imgui.h>
 #include <imgui-SFML.h>
 
@@ -74,6 +75,7 @@ int main(int argc, char* argv[])
   dilloxl::TelloDrone drone{ tellocom };
   dilloxl::UserProgram::Configure(argc, argv);
   dilloxl::UserProgram program{"Studente"};
+  dilloxl::VideoDecoder decoder;
 
   dilloxl::GuiVideo ui_Video;
   dilloxl::GuiConsole ui_Console;

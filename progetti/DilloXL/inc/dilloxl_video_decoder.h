@@ -19,25 +19,28 @@
  * along with DILLOXL. If not, see <http://www.gnu.org/licenses/>.
  * 
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-#ifndef dilloxl_ui_video_h
-#define dilloxl_ui_video_h
+#ifndef dilloxl_video_decoder_h
+#define dilloxl_video_decoder_h
 
 #include "dilloxl_system.h"
+#include <SFML/Graphics.hpp>
 
 namespace dilloxl {
-  class GuiVideo {
+  class VideoDecoder {
   public:
-    GuiVideo();
-    GuiVideo(const GuiVideo&) = delete;
-    GuiVideo(GuiVideo&&) noexcept;
-    GuiVideo& operator=(const GuiVideo&) = delete;
-    GuiVideo& operator=(GuiVideo&&) noexcept;
-    virtual ~GuiVideo();
-    virtual void draw();
-    virtual void addFrame(const uint8_t*, size_t);
+    static VideoDecoder& Get();
+    VideoDecoder();
+    VideoDecoder(const VideoDecoder&) = delete;
+    VideoDecoder(VideoDecoder&&) noexcept;
+    VideoDecoder& operator=(const VideoDecoder&) = delete;
+    VideoDecoder& operator=(VideoDecoder&&) noexcept;
+   ~VideoDecoder();
+    void feed(const uint8_t*, size_t);
+    bool hasFrame() const;
+    sf::Texture nextFrame() const;
   private:
     class Impl; Impl* m_pImpl;
   };
 }
 
-#endif // dilloxl_ui_video_h
+#endif // dilloxl_video_decoder_h
