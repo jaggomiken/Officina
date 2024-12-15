@@ -26,6 +26,11 @@
 #include "imgui.h"
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * MACROS
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+#define DILLOXL_UI_VIDEO_DEBUG                                             0
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * DECLARATIONS
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 class dilloxl::GuiVideo::Impl {
@@ -34,6 +39,7 @@ public:
   ~Impl();
   void draw();
   bool m_bVideoEnable;
+  sf::Texture m_texture;
 };
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -121,8 +127,19 @@ void dilloxl::GuiVideo::Impl::draw()
   }
   ImGui::Separator();
   if (VideoDecoder::Get().hasFrame()) {
-    auto texture = VideoDecoder::Get().nextFrame();
-    ImGui::Image(texture);
+    auto img = VideoDecoder::Get().nextFrame();
+#if DILLOXL_UI_VIDEO_DEBUG == 1    
+    fprintf(stderr, "[DILLOXL]: >>> trovata immagine del video da blittare.\n");
+#endif    
+    if (m_texture.getSize() == sf::Vector2u{0,0}) {
+      if (!m_texture.loadFromImage(img)) {
+        fprintf(stderr
+          , "[DILLOXL]: ERRORE: Problema nel preparare la texture.\n");
+      }
+    } else {
+      m_texture.update(img);
+    }
   }
+  ImGui::Image(m_texture);
 	ImGui::End();
 }

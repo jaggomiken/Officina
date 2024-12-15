@@ -21,7 +21,7 @@
 #  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 #
 # Per il build è necessario specificare BUILD_SHARED_LIBS=OFF
-# su cmake.
+# su cmake quando con MSYS/UCRT64 e quindi Windows.
 #
 cmake_minimum_required(VERSION 3.22)
 project(dilloxl VERSION 1.0.0 LANGUAGES CXX)
@@ -31,7 +31,7 @@ set(SFML_STATIC_LIBRARIES ON)
 find_package(SFML COMPONENTS Graphics Window System Audio Network)
 find_package(ImGui-SFML)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(FFMPEG libavcodec libavformat libavutil)
+pkg_check_modules(FFMPEG libavcodec libavformat libavutil libswscale libswresample)
 set(SRC 
     src/dilloxl_main.cpp 
     src/dilloxl_system.cpp 

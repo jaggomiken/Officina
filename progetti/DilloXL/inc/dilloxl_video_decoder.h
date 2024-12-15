@@ -37,7 +37,7 @@ namespace dilloxl {
    ~VideoDecoder();
     void feed(const uint8_t*, size_t);
     bool hasFrame() const;
-    sf::Texture nextFrame() const;
+    sf::Image nextFrame() const;
   private:
     class Impl; Impl* m_pImpl;
   };

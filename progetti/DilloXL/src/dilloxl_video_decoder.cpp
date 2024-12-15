@@ -27,10 +27,54 @@
 #include <queue>
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * MACROS
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+#define DILLOXL_VIDEO_DECODER_DEBUG                                        0
+#define DILLOXL_VIDEO_DECODER_COVERT_DEBUG                                 0
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * SPECIAL INCLUDES
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
+}
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+ * FUNCTION
+ * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+static void convert_yuv12_to_rgb32(AVFrame *src_frame, AVFrame *dst_frame) 
+{ 
+#if DILLOXL_VIDEO_DECODER_COVERT_DEBUG == 1  
+  fprintf(stderr
+    , "[DILLOXL]: Conversione da YUV12 a RGB32...\n");
+#endif    
+  auto* sws_ctx = sws_getContext( src_frame->width, src_frame->height
+    , AVPixelFormat(src_frame->format)
+    , dst_frame->width
+    , dst_frame->height
+    , AV_PIX_FMT_BGR32
+    , SWS_BILINEAR
+    , NULL, NULL, NULL
+  ); 
+  if (nullptr == sws_ctx) {
+    fprintf(stderr, "Errore nella creazione del contesto di conversione.\n");
+    return; 
+  } 
+  sws_scale( sws_ctx
+    , reinterpret_cast<const uint8_t* const*>(src_frame->data)
+    , src_frame->linesize
+    , 0
+    , src_frame->height
+    , dst_frame->data
+    , dst_frame->linesize
+  );
+  sws_freeContext(sws_ctx);
+#if DILLOXL_VIDEO_DECODER_COVERT_DEBUG == 1    
+  fprintf(stderr
+    , "[DILLOXL]: Conversione da YUV12 a RGB32, FATTA.\n");
+#endif    
 }
 
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -59,13 +103,15 @@ public:
   size_t m_szExitThread;
   size_t m_szThreadStarted;
   std::mutex m_mtxImgQueue;
-  std::queue<sf::Texture> m_qImg;
+  std::queue<sf::Image> m_qImg;
+  uint8_t m_btImageData[4096 * 4096 * 4];
 
   // ffmpeg related stuff
         const AVCodec* m_pCodec;
   AVCodecParserContext* m_pCodecParserCtx;
         AVCodecContext* m_pCodecCtx;
                AVFrame* m_pFrame;
+               AVFrame* m_pFrameDst;
               AVPacket* m_pPkt;
 
   void m_InitDecoder();
@@ -121,10 +167,12 @@ dilloxl::VideoDecoder::~VideoDecoder()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::VideoDecoder::feed(const uint8_t* pData, size_t szSizeInBytes)
 {
+#if DILLOXL_VIDEO_DECODER_DEBUG == 1  
   std::fprintf(stderr
     , DILLOXL_TERM_FGDIMM 
       "[DILLOXL]: Dati video %zubytes inviati al thread decoder..."
       DILLOXL_TERM_RESETA "\n", szSizeInBytes);
+#endif      
   
   Impl::Buffer buf;
   DILLOXL_CAPTURE_CPU(szSizeInBytes >= sizeof(buf.first)
@@ -149,7 +197,7 @@ bool dilloxl::VideoDecoder::hasFrame() const
 /* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
  * METHOD
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
-sf::Texture dilloxl::VideoDecoder::nextFrame() const
+sf::Image dilloxl::VideoDecoder::nextFrame() const
 {
   std::lock_guard<std::mutex> guard{ m_pImpl->m_mtxImgQueue };
   auto ret = m_pImpl->m_qImg.front(); m_pImpl->m_qImg.pop();
@@ -166,6 +214,7 @@ dilloxl::VideoDecoder::Impl::Impl()
 , m_pCodecParserCtx { nullptr }
 , m_pCodecCtx       { nullptr }
 , m_pFrame          { nullptr }
+, m_pFrameDst       { nullptr }
 , m_pPkt            { nullptr }
 {
   m_InitDecoder();
@@ -193,10 +242,12 @@ dilloxl::VideoDecoder::Impl::Impl()
       }
 
       if (bHasData) {
+#if DILLOXL_VIDEO_DECODER_DEBUG == 1     
         std::fprintf(stderr
           , DILLOXL_TERM_FGDIMM 
             "[DILLOXL]: Dati video %zubytes presi dal thread decoder..."
             DILLOXL_TERM_RESETA "\n", buf.second);
+#endif            
         m_Decode(buf.first, buf.second);
       }
     }
@@ -221,22 +272,26 @@ void dilloxl::VideoDecoder::Impl::m_InitDecoder()
 {
   m_pPkt = av_packet_alloc();
   if (nullptr == m_pPkt) {
-
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, allocazione PACKET.\n");
+    return;
   }
 
   m_pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
   if (nullptr == m_pCodec) {
-
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, ricerca CODEC.\n");
+    return;
   }
 
   m_pCodecParserCtx = av_parser_init(m_pCodec->id);
   if (nullptr ==m_pCodecParserCtx) {
-
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, allocazione PARSER.\n");
+    return;
   }
 
   m_pCodecCtx = avcodec_alloc_context3(m_pCodec);
   if (nullptr == m_pCodecCtx) {
-
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, allocazione CONTEXT.\n");
+    return;
   }
 
   /* For some codecs, such as msmpeg4 and mpeg4, width and height
@@ -244,12 +299,20 @@ void dilloxl::VideoDecoder::Impl::m_InitDecoder()
     available in the bitstream. */
 
   if (avcodec_open2(m_pCodecCtx, m_pCodec, nullptr) < 0) {
-
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, apertura CODEC.\n");
+    return;
   }
 
   m_pFrame = av_frame_alloc();
   if (nullptr == m_pFrame) {
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, allocazione FRAME.\n");
+    return;
+  }
 
+  m_pFrameDst = av_frame_alloc();
+  if (nullptr == m_pFrameDst) {
+    std::fprintf(stderr, "[DILLOXL]: ERRORE, allocazione FRAME (dst).\n");
+    return;
   }
 }
 
@@ -264,6 +327,7 @@ void dilloxl::VideoDecoder::Impl::m_FiniDecoder()
        av_parser_close(m_pCodecParserCtx);
   avcodec_free_context(&m_pCodecCtx);
          av_frame_free(&m_pFrame);
+         av_frame_free(&m_pFrameDst);
         av_packet_free(&m_pPkt);
 }
 
@@ -304,21 +368,58 @@ void dilloxl::VideoDecoder::Impl::m_BuildFrame()
       else if (ret < 0) {
         fprintf(stderr, "Errore durante la decodifica!\n");
       } else {
-        /*
-          m_pCodecCtx->frame_num;
-          m_pFrame->data[0];
-          m_pFrame->linesize[0];
-          m_pFrame->width;
-          m_pFrame->height;
-        */
-#if 0       
-        sf::Image image({ 
-            uint32_t(m_pFrame->width), uint32_t(m_pFrame->height) }
-          , m_pFrame->data[0]);
-        { std::lock_guard<std::mutex> guard{ m_mtxImgQueue };
-          m_qImg.push(sf::Texture{ image });
+        if (( m_pFrameDst->width !=  m_pFrame->width) ||
+            (m_pFrameDst->height != m_pFrame->height)) 
+        {
+          fprintf(stderr
+            , "[DILLOXL]: Allocazione frame di destinazione...\n");
+          m_pFrameDst->width  = m_pFrame->width;
+          m_pFrameDst->height = m_pFrame->height;
+          m_pFrameDst->format = AV_PIX_FMT_RGB32;
+          if (av_image_alloc(m_pFrameDst->data, m_pFrameDst->linesize
+            , m_pFrameDst->width
+            , m_pFrameDst->height
+            , AV_PIX_FMT_RGB32
+            , 32) < 0) 
+          {
+            fprintf(stderr
+              , "[DILLOXL]: ERRORE: Allocazione del FRAME.\n");
+            return;
+          }
         }
-#endif        
+        convert_yuv12_to_rgb32(m_pFrame, m_pFrameDst);
+        size_t 
+            w = size_t(m_pFrameDst->width)
+          , h = size_t(m_pFrameDst->height);
+#if DILLOXL_VIDEO_DECODER_DEBUG == 1
+        fprintf(stderr
+          , "[DILLOXL]: Copia dei bit immagine in buffer locale (%zux%zu)...\n"
+          , w, h);
+#endif          
+        if (sizeof(m_btImageData) >= (w * h * 4)) {
+          for (int y = 0;y < h;++y) {
+            ::memcpy(
+                       m_btImageData + (y * m_pFrameDst->linesize[0])
+              , m_pFrameDst->data[0] + (y * m_pFrameDst->linesize[0])
+              , w * 4);
+          }
+        } else {
+          fprintf(stderr
+            , "[DILLOXL]: ERRORE: Dimensione buffer immagine non sufficiente.\n");
+        }
+#if DILLOXL_VIDEO_DECODER_DEBUG == 1        
+        fprintf(stderr
+          , "[DILLOXL]: Costruzione sf::Image...\n");
+#endif          
+        sf::Image image({ uint32_t(w), uint32_t(h) }, m_btImageData);
+        { std::lock_guard<std::mutex> guard{ m_mtxImgQueue };
+          m_qImg.push(image);
+#if DILLOXL_VIDEO_DECODER_DEBUG == 1
+          fprintf(stderr
+            , "[DILLOXL]: Immagine accodata per video (%zux%zu)...\n"
+            , w, h);
+#endif
+        }
       }
     }
   }
