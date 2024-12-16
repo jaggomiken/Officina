@@ -120,26 +120,27 @@ dilloxl::GuiVideo::Impl::~Impl()
  * <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
 void dilloxl::GuiVideo::Impl::draw()
 {
-	ImGui::Begin("VIDEO", nullptr, 0);
-	ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
-  if (ImGui::Checkbox("Abilita Video", &m_bVideoEnable)) {
-    TelloDrone::Get().video(m_bVideoEnable);
-  }
-  ImGui::Separator();
-  if (VideoDecoder::Get().hasFrame()) {
-    auto img = VideoDecoder::Get().nextFrame();
-#if DILLOXL_UI_VIDEO_DEBUG == 1    
-    fprintf(stderr, "[DILLOXL]: >>> trovata immagine del video da blittare.\n");
-#endif    
-    if (m_texture.getSize() == sf::Vector2u{0,0}) {
-      if (!m_texture.loadFromImage(img)) {
-        fprintf(stderr
-          , "[DILLOXL]: ERRORE: Problema nel preparare la texture.\n");
-      }
-    } else {
-      m_texture.update(img);
+	if (ImGui::Begin("Telecamera Drone", nullptr, 0)) {
+    ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
+    if (ImGui::Checkbox("Abilita Video", &m_bVideoEnable)) {
+      TelloDrone::Get().video(m_bVideoEnable);
     }
+    ImGui::Separator();
+    if (VideoDecoder::Get().hasFrame()) {
+      auto img = VideoDecoder::Get().nextFrame();
+#if DILLOXL_UI_VIDEO_DEBUG == 1    
+      fprintf(stderr, "[DILLOXL]: >>> trovata immagine del video da blittare.\n");
+#endif    
+      if (m_texture.getSize() == sf::Vector2u{0,0}) {
+        if (!m_texture.loadFromImage(img)) {
+          fprintf(stderr
+            , "[DILLOXL]: ERRORE: Problema nel preparare la texture.\n");
+        }
+      } else {
+        m_texture.update(img);
+      }
+    }
+    ImGui::Image(m_texture);
   }
-  ImGui::Image(m_texture);
 	ImGui::End();
 }

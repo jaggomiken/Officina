@@ -25,6 +25,7 @@
 #include "dilloxl_ui_control.h"
 #include "dilloxl_ui_editor.h"
 #include "dilloxl_ui_video.h"
+#include "dilloxl_ui_attitude.h"
 #include "dilloxl_user_program.h"
 #include "dilloxl_video_decoder.h"
 #include <imgui.h>
@@ -33,7 +34,7 @@
 int main(int argc, char* argv[]) 
 {
   const char* pTitle = 
-    "DILLO XL Versione 2.0.0 - "
+    "DILLO XL Versione 2.1.0 - "
     "By Prof. Michele Iacobellis (COLAMONICO-CHIARULLI)";
   std::fprintf(stderr, "[DILLOXL]: %s\n", pTitle);
   std::fprintf(stderr, "[DILLOXL]: argv[1] = valore scala display.\n");
@@ -77,6 +78,7 @@ int main(int argc, char* argv[])
   dilloxl::UserProgram program{"Studente"};
   dilloxl::VideoDecoder decoder;
 
+  dilloxl::GuiAttitude ui_Attitude;
   dilloxl::GuiVideo ui_Video;
   dilloxl::GuiConsole ui_Console;
   dilloxl::GuiControl ui_Control;
@@ -111,7 +113,8 @@ int main(int argc, char* argv[])
     ui_Control.draw();
     ui_Console.draw();
       ui_Video.draw();
-      
+   ui_Attitude.draw();
+
     window.clear();
     ImGui::SFML::Render(window);
     window.display();

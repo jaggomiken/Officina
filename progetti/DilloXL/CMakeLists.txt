@@ -40,7 +40,8 @@ set(SRC
     src/dilloxl_ui_console.cpp 
     src/dilloxl_ui_control.cpp 
     src/dilloxl_ui_editor.cpp 
-    src/dilloxl_ui_video.cpp 
+    src/dilloxl_ui_video.cpp
+    src/dilloxl_ui_attitude.cpp 
     src/dilloxl_user_program.cpp
     src/dilloxl_if.cpp
     src/dilloxl_video_decoder.cpp
@@ -53,7 +54,8 @@ set(INC
     inc/dilloxl_ui_console.h 
     inc/dilloxl_ui_control.h 
     inc/dilloxl_ui_editor.h 
-    inc/dilloxl_ui_video.h 
+    inc/dilloxl_ui_video.h
+    inc/dilloxl_ui_attitude.h 
     inc/dilloxl_user_program.h
     inc/dilloxl_if.h
     inc/dilloxl_video_decoder.h
@@ -77,11 +79,17 @@ if (WIN32)
   install(FILES 
     inc/dilloxl 
     fonts/NovaMono-Regular.ttf
+    images/drone_front.png
+    images/drone_side.png
+    images/drone_top.png
     ${CMAKE_BINARY_DIR}/libdilloxl.dll.a
     DESTINATION bin)
 else()
   install(FILES 
     inc/dilloxl 
     fonts/NovaMono-Regular.ttf
+    images/drone_front.png
+    images/drone_side.png
+    images/drone_top.png
     DESTINATION bin)
 endif()

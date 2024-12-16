@@ -128,7 +128,7 @@ dilloxl::GuiEditor::Impl::~Impl()
 void dilloxl::GuiEditor::Impl::draw()
 {
 	auto cpos = m_editor.GetCursorPosition();
-	ImGui::Begin("PROGRAMMA", nullptr
+	ImGui::Begin("Programma", nullptr
 		, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
 	ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
 	if (ImGui::BeginMenuBar()) {
