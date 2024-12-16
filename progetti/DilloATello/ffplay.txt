@@ -1,2 +1,0 @@
-ffplay -fflags nobuffer -fflags discardcorrupt -flags low_delay -framedrop -avioflags direct -
-
