@@ -167,17 +167,6 @@ void dilloxl::GuiAttitude::Impl::draw()
   auto p = drone.lastStatus().u.status.pitch;
   auto y = drone.lastStatus().u.status.yaw;
 
-  if ((p - m_fLastP) > FLT_EPSILON) {
-  }
-  if ((y - m_fLastY) > FLT_EPSILON) {
-  }
-  if ((r - m_fLastR) > FLT_EPSILON) {
-  }
-
-  m_fLastP = p;
-  m_fLastR = r;
-  m_fLastY = y;
-
 	if (ImGui::Begin("Assetto Drone", nullptr, 0)) {
 	  ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
     ImDrawList* pDrawList = ImGui::GetWindowDrawList();
@@ -188,28 +177,25 @@ void dilloxl::GuiAttitude::Impl::draw()
       pDrawList->AddCircleFilled(ImVec2{ pos.x + siz.x / 2.0f, pos.y + siz.y / 2.0f }, siz.x / 2.0f, IM_COL32(120, 120, 120, 255), 0);
       ImageRotated(m_texTop.getNativeHandle()
         , ImVec2{ pos.x + siz.x / 2.0f, pos.y + siz.y / 2.0f }
-        , ImVec2{ icon_w, icon_h }, (y * M_PI) / 180.0f); }
+        , ImVec2{ icon_w, icon_h }, ((90.0f + y) * M_PI) / 180.0f); }
     pos.x += icon_w + h_pad;
     { auto siz = m_texSid.getSize(); float aspect = float(siz.y) / float(siz.x);
       icon_h = icon_w * aspect;
       pDrawList->AddCircleFilled(ImVec2{ pos.x + siz.x / 2.0f, pos.y + siz.y / 2.0f }, siz.x / 2.0f, IM_COL32(120, 120, 120, 255), 0);
       ImageRotated(m_texSid.getNativeHandle()
         , ImVec2{ pos.x + siz.x / 2.0f, pos.y + siz.y / 2.0f }
-        , ImVec2{ icon_w, icon_h }, (p * M_PI) / 180.0f); }
+        , ImVec2{ icon_w, icon_h }, (-p * M_PI) / 180.0f); }
     pos.x += icon_w + h_pad;
     { auto siz = m_texFro.getSize(); float aspect = float(siz.y) / float(siz.x);
       icon_h = icon_w * aspect;
       pDrawList->AddCircleFilled(ImVec2{ pos.x + siz.x / 2.0f, pos.y + siz.y / 2.0f }, siz.x / 2.0f, IM_COL32(120, 120, 120, 255), 0);
       ImageRotated(m_texFro.getNativeHandle()
           , ImVec2{ pos.x + siz.x / 2.0f, pos.y + siz.y / 2.0f }
-          , ImVec2{ icon_w, icon_h }, (r * M_PI) / 180.0f); }
+          , ImVec2{ icon_w, icon_h }, (-r * M_PI) / 180.0f); }
   }
 	ImGui::End();
-}
 
-#if 0
-ImVec2 p = ImGui::GetCursorScreenPos();
-static float angle = 0.0f;
-angle += io.DeltaTime * 1.0f;
-ImageRotated(io.Fonts->TexID, ImVec2(p.x + 100.0f, p.y + 100.0f), ImVec2(200.0f, 200.0f), angle); 
-#endif
+  m_fLastP = p;
+  m_fLastR = r;
+  m_fLastY = y;
+}
