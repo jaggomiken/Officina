@@ -99,6 +99,7 @@ p.smallfont {
 
 p.article {
     line-height: 1.8;
+    text-align: justify;
 }
 
 a {
